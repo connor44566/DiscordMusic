@@ -1,0 +1,24 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '1.2.3'
+    id 'application'
+    id 'java'
+}
+
+group 'minn'
+version '1.0'
+
+
+//noinspection GroovyUnusedAssignment
+mainClassName=""
+compileJava.options.encoding = 'UTF-8'
+sourceCompatibility = 1.8
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    //compile fileTree(dir: 'libs', include: '*.jar')
+    compile 'net.dv8tion:JDA:2.1.1_317'
+    compile 'net.dv8tion:jda-plyer:0.2.1_9'
+}
