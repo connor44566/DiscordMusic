@@ -27,6 +27,8 @@ public class Main
 			bot.manager.registerCommand(new ListCommands(bot));
 			bot.manager.registerCommand(new EvalCommand(bot));
 			bot.manager.registerCommand(new StreamingCommand(bot));
+			bot.manager.registerCommand(new ListCommand());
+			bot.manager.registerCommand(new PlayerCommand(bot));
 
 			bot.manager.registerCommand(new GenericCommand()
 			{

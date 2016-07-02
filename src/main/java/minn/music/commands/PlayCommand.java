@@ -81,6 +81,11 @@ public class PlayCommand extends GenericCommand
 		for (AudioSource s : sources)
 		{
 			AudioInfo info = s.getInfo();
+			if(info.isLive())
+			{
+				error++;
+				continue;
+			}
 			if (info.getError() == null)
 			{
 				player.getAudioQueue().add(s);
