@@ -1,33 +1,34 @@
 package minn.music;
 
-import minn.music.commands.GenericCommand;
+import minn.music.commands.JoinCommand;
+import minn.music.commands.PingCommand;
+import minn.music.commands.PlayCommand;
 
 public class Main
 {
 
-	private static MusicBot bot;
-
 	public static void main(String... a)
 	{
-		bot = new MusicBot(bot -> {
-			bot.manager.registerCommand(new GenericCommand()
+		new MusicBot(bot -> {
+			bot.manager.registerCommand(new PingCommand());
+			bot.manager.registerCommand(new JoinCommand(bot));
+			bot.manager.registerCommand(new PlayCommand());
+
+
+/*			bot.manager.registerCommand(new GenericCommand()
 			{
 				@Override
 				public String getAlias()
 				{
-					return "Ping";
+					return "invite";
 				}
 
 				@Override
 				public void invoke(CommandEvent event)
 				{
-					long time = System.currentTimeMillis();
-					event.send("Pong!", m ->
-					{
-						m.updateMessageAsync("__**Pong:**__ " + (System.currentTimeMillis() - time) + "ms", null);
-					});
+					event.send(String.format("**Invite: %s**", event.api.getSelfInfo().getAuthUrl()));
 				}
-			});
+			});*/
 		});
 
 	}

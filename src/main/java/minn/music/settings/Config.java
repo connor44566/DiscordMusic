@@ -1,6 +1,5 @@
 package minn.music.settings;
 
-import com.sun.istack.internal.NotNull;
 import net.dv8tion.jda.utils.SimpleLog;
 import org.json.JSONObject;
 
@@ -49,7 +48,7 @@ public class Config
 	 * @return boolean -
 	 * Whether file was created or not.
 	 */
-	public static boolean createConfig(@NotNull JSONObject object, @NotNull String location)
+	public static boolean createConfig(JSONObject object, String location)
 	{
 		try
 		{
@@ -65,7 +64,7 @@ public class Config
 		}
 	}
 
-	private void readJSON(@NotNull File file) throws IOException
+	private void readJSON(File file) throws IOException
 	{
 		try
 		{
@@ -77,7 +76,7 @@ public class Config
 		}
 	}
 
-	private void readJSON(@NotNull JSONObject object)
+	private void readJSON(JSONObject object)
 	{
 		this.object = object;
 		if (isBase)

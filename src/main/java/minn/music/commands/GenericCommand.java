@@ -14,8 +14,9 @@ public abstract class GenericCommand
 {
 	/**
 	 * Returns true if the command is allowed in private channels.
+	 *
 	 * @return boolean
-	 *          Default true.
+	 * Default true.
 	 */
 	public boolean isPrivate()
 	{
@@ -24,6 +25,7 @@ public abstract class GenericCommand
 
 	/**
 	 * Used to find commands.
+	 *
 	 * @return alias
 	 */
 	public abstract String getAlias();
@@ -51,6 +53,9 @@ public abstract class GenericCommand
 		public final User author;
 		public final Message message;
 
+		public final String allArgs;
+		public final String[] args;
+
 		public CommandEvent(MessageReceivedEvent event)
 		{
 			// TODO: implement
@@ -59,6 +64,18 @@ public abstract class GenericCommand
 			api = event.getJDA();
 			author = event.getAuthor();
 			message = event.getMessage();
+
+			String[] parts = message.getRawContent().split("\\s+", 2);
+
+			if(parts.length > 1)
+			{
+				this.allArgs = parts[1];
+				this.args = allArgs.split("\\s+");
+			} else
+			{
+				this.allArgs = "";
+				this.args = new String[0];
+			}
 
 			messageEvent = event;
 		}
@@ -72,6 +89,18 @@ public abstract class GenericCommand
 			author = event.getAuthor();
 			message = event.getMessage();
 
+			String[] parts = message.getRawContent().split("\\s+", 2);
+
+			if(parts.length > 1)
+			{
+				this.allArgs = parts[1];
+				this.args = allArgs.split("\\s+");
+			} else
+			{
+				this.allArgs = "";
+				this.args = new String[0];
+			}
+
 			guildEvent = event;
 		}
 
@@ -82,7 +111,8 @@ public abstract class GenericCommand
 
 		public void send(String message, Consumer<Message> callback)
 		{
-			try {
+			try
+			{
 				channel.sendMessageAsync(message, callback);
 			} catch (Exception ignored)
 			{

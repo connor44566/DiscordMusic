@@ -64,17 +64,17 @@ public class CommandManager
 		{
 			if((bot.config.prefix + c.getAlias()).equalsIgnoreCase(com))
 			{
-				c.invoke(new GenericCommand.CommandEvent(event));
+				executor.submit(() -> c.invoke(new GenericCommand.CommandEvent(event)));
 				return;
 			}
 		}
-		if (!event.isPrivate())
+		if (event.isPrivate())
 			return;
 		for (GenericCommand c : noPrivateCommands)
 		{
 			if((bot.config.prefix + c.getAlias()).equalsIgnoreCase(com))
 			{
-				c.invoke(new GenericCommand.CommandEvent(event));
+				executor.submit(() -> c.invoke(new GenericCommand.CommandEvent(event)));
 				return;
 			}
 		}
@@ -127,7 +127,7 @@ public class CommandManager
 		@Override
 		public void onCommand(GenericCommand command)
 		{
-
+			// TODO: Add for logs.
 		}
 
 	}

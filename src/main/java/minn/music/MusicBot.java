@@ -38,7 +38,7 @@ public class MusicBot implements EventListener
 					.setAudioEnabled(true)
 					.setAutoReconnect(true)
 					.setBotToken(config.token)
-					.setBulkDeleteSplittingEnabled(false)
+					//.setBulkDeleteSplittingEnabled(false)
 					.addListener(this)
 					.buildAsync();
 
