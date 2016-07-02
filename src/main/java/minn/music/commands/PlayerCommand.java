@@ -92,6 +92,16 @@ public class PlayerCommand extends GenericCommand
 		}));
 	}
 
+	public String getInfo()
+	{
+		String s = "player <property> [input]\n\nProperties:```xml";
+		for (PlayerProperty p : properties)
+		{
+			s += "\n> " + p.name;
+		}
+		return(s + "```");
+	}
+
 	public String getAttributes()
 	{
 		return "<property> [input]";

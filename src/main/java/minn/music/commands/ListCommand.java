@@ -37,23 +37,24 @@ public class ListCommand extends GenericCommand
 			event.send("**No queued songs.**");
 			return;
 		}
-		String response = "**__Current:__ " +
-				"[" + player.getCurrentTimestamp().getTimestamp() + "/" + player.getCurrentAudioSource().getInfo().getDuration().getTimestamp() + "] " +
+		String response = "__Current:__ " +
+				"`[" + player.getCurrentTimestamp().getTimestamp() + "/" + player.getCurrentAudioSource().getInfo().getDuration().getTimestamp() + "]` ** " +
 				player.getCurrentAudioSource().getInfo().getTitle().replaceAll("[*]{2}", "\\*\\*") + "**";
 
 		if (!player.getAudioQueue().isEmpty())
 		{
-			response += "\n**__Queue: " + player.getAudioQueue().size() + " entries.__**\n";
+			response += "\n__Queue: **" + player.getAudioQueue().size() + "** entries.__\n";
 			for (int i = 0; i < player.getAudioQueue().size() && i < 5; i++)
 			{
 				AudioInfo info = player.getAudioQueue().get(i).getInfo();
-				response += "\n" + (i + 1) + ") `[" + info.getDuration().getTimestamp() + "]` **" + info.getTitle().replaceAll("[*]{2}", "\\*\\*") + "**";
+				response += "\n**" + (i + 1) + ")** `[" + info.getDuration().getTimestamp() + "]` " + info.getTitle().replaceAll("[*]{2}", "\\*\\*");
 			}
 			if (player.getAudioQueue().size() >= 5)
 			{
 				response += "\n...";
 			}
 		}
+		response += "";
 
 		event.send(response);
 
