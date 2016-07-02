@@ -1,6 +1,7 @@
 package minn.music;
 
 import minn.music.commands.JoinCommand;
+import minn.music.commands.ListCommands;
 import minn.music.commands.PingCommand;
 import minn.music.commands.PlayCommand;
 
@@ -13,7 +14,7 @@ public class Main
 			bot.manager.registerCommand(new PingCommand());
 			bot.manager.registerCommand(new JoinCommand(bot));
 			bot.manager.registerCommand(new PlayCommand());
-
+			bot.manager.registerCommand(new ListCommands(bot));
 
 /*			bot.manager.registerCommand(new GenericCommand()
 			{

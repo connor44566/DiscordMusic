@@ -30,7 +30,29 @@ public abstract class GenericCommand
 	 */
 	public abstract String getAlias();
 
+	/**
+	 * Used to get info about the command.
+	 * @return Info
+	 */
+	public String getInfo()
+	{
+		return getAlias() + " " + getAttributes();
+	}
+
+	/**
+	 * Must be implemented by sub-class.
+	 * @param event A CommandEvent implementation.
+	 */
 	public abstract void invoke(CommandEvent event);
+
+	/**
+	 * Attributes this command requires.
+	 * @return String
+	 */
+	public String getAttributes()
+	{
+		return "";
+	}
 
 	/**
 	 * Wrapper to allow shortcuts.
@@ -47,6 +69,8 @@ public abstract class GenericCommand
 		 */
 		public GuildMessageReceivedEvent guildEvent;
 
+
+		public final boolean isPrivate;
 		public final MessageChannel channel;
 		public final Guild guild;
 		public final JDA api;
@@ -64,6 +88,7 @@ public abstract class GenericCommand
 			api = event.getJDA();
 			author = event.getAuthor();
 			message = event.getMessage();
+			isPrivate = event.isPrivate();
 
 			String[] parts = message.getRawContent().split("\\s+", 2);
 
@@ -88,6 +113,7 @@ public abstract class GenericCommand
 			api = event.getJDA();
 			author = event.getAuthor();
 			message = event.getMessage();
+			isPrivate = false;
 
 			String[] parts = message.getRawContent().split("\\s+", 2);
 

@@ -13,6 +13,12 @@ public class JoinCommand extends GenericCommand
 	{
 		this.bot = bot;
 	}
+
+	public String getAttributes()
+	{
+		return "<ChannelName>";
+	}
+
 	@Override
 	public boolean isPrivate()
 	{

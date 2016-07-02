@@ -5,7 +5,7 @@ public class PingCommand extends GenericCommand
 	@Override
 	public String getAlias()
 	{
-		return "Ping";
+		return "ping";
 	}
 
 	@Override

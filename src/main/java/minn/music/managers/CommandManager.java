@@ -104,6 +104,15 @@ public class CommandManager
 	}
 
 	/**
+	 * Returns all commands that are available only available to guilds.
+	 *
+	 * @return List
+	 */
+	public List<GenericCommand> getNonPrivateCommands()
+	{
+		return Collections.unmodifiableList(new LinkedList<>(noPrivateCommands));
+	}
+	/**
 	 * Used to register a new {@link GenericCommand Command}.
 	 *
 	 * @param command GenericCommand.

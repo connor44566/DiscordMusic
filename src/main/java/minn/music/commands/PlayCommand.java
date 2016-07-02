@@ -18,6 +18,11 @@ public class PlayCommand extends GenericCommand
 		return t;
 	});*/
 
+	public String getAttributes()
+	{
+		return "[url]";
+	}
+
 	public boolean isPrivate()
 	{
 		return false;
