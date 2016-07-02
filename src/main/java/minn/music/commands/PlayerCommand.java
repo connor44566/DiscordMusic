@@ -4,6 +4,7 @@ import minn.music.MusicBot;
 import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.player.MusicPlayer;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -13,9 +14,31 @@ public class PlayerCommand extends GenericCommand
 	private MusicBot bot;
 	private List<PlayerProperty> properties = new LinkedList<>();
 
+	public boolean isPrivate()
+	{
+		return false;
+	}
+
 	public PlayerCommand(MusicBot bot)
 	{
 		this.bot = bot;
+
+		properties.add(new PlayerProperty("shuffle", (input, guild) ->
+		{
+			try
+			{
+				MusicPlayer player = (MusicPlayer) guild.getAudioManager().getSendingHandler();
+				if(player == null)
+				{
+					throw new ClassCastException("Player is not available.");
+				}
+				Collections.shuffle(player.getAudioQueue());
+				throw new NullPointerException("Queue has been shuffled.");
+			} catch (ClassCastException e)
+			{
+				throw new ClassCastException("Player is not available.");
+			}
+		}));
 
 		properties.add(new PlayerProperty("volume", (input, guild) ->
 		{
@@ -99,7 +122,9 @@ public class PlayerCommand extends GenericCommand
 		{
 			if (p.name.equalsIgnoreCase(event.args[0]))
 			{
-				p.invoke((parts.length == 2) ? parts[1] : "", event.guild);
+				String response = p.invoke((parts.length == 2) ? parts[1] : "", event.guild);
+				if(response != null && !response.isEmpty())
+					event.send(response);
 				return;
 			}
 		}

@@ -47,7 +47,7 @@ public class ListCommand extends GenericCommand
 			for (int i = 0; i < player.getAudioQueue().size() && i < 5; i++)
 			{
 				AudioInfo info = player.getAudioQueue().get(i).getInfo();
-				response += "\n" + i + ") `[" + info.getDuration().getTimestamp() + "]` **" + info.getTitle().replaceAll("[*]{2}", "\\*\\*") + "**";
+				response += "\n" + (i + 1) + ") `[" + info.getDuration().getTimestamp() + "]` **" + info.getTitle().replaceAll("[*]{2}", "\\*\\*") + "**";
 			}
 			if (player.getAudioQueue().size() >= 5)
 			{
