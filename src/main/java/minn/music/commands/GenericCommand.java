@@ -80,6 +80,7 @@ public abstract class GenericCommand
 		public final String allArgs;
 		public final String[] args;
 
+
 		public CommandEvent(MessageReceivedEvent event)
 		{
 			// TODO: implement
