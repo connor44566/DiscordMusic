@@ -13,7 +13,7 @@ public class PlayerUtil
 		MED_VOLUME("\uD83D\uDD09"),
 		LOUD_VOLUME("\uD83D\uDD0A"),
 		MUTE("\uD83D\uDD07"),
-		SPACE("➖");
+		SPACE("▬");
 
 		private String value;
 

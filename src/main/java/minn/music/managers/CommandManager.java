@@ -57,7 +57,7 @@ public class CommandManager
 
 	private void handleMessage(MessageReceivedEvent event)
 	{
-		if(!event.getMessage().getRawContent().startsWith(bot.config.prefix))
+		if(!event.getMessage().getRawContent().startsWith(bot.config.prefix) || event.getAuthor() == event.getJDA().getSelfInfo())
 			return;
 		final String com = event.getMessage().getRawContent().split("\\s+", 2)[0];
 		for (GenericCommand c : commands)
