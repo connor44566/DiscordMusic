@@ -18,7 +18,7 @@ public class CommandManager
 	private final List<GenericCommand> noPrivateCommands = new LinkedList<>();
 	private final List<GenericCommand> commands = new LinkedList<>();
 	private final List<CommandListener<GenericCommand>> listeners = new LinkedList<>();
-	private final MusicBot bot;
+	public final MusicBot bot;
 	private final static SimpleLog LOG = SimpleLog.getLog("CommandManager");
 
 	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 10, 5, TimeUnit.MINUTES, new LinkedBlockingQueue<>(), r -> {
@@ -85,7 +85,7 @@ public class CommandManager
 	}
 
 	/**
-	 * Used to override default {@link CommandListener CommandListener} implementation used by the manager.
+	 * Used to override default {@link CommandListener CommandListener} implementation used by the managers.
 	 *
 	 * @param listener A CommandListener implementation.
 	 */

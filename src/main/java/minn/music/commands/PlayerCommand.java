@@ -129,12 +129,12 @@ public class PlayerCommand extends GenericCommand
 	{
 		if (event.allArgs.isEmpty())
 		{
-			String s = "**__Properties:__**\n```xml";
+			String s = "**__Properties:__**\n";
 			for (PlayerProperty p : properties)
 			{
-				s += "\n" + p.name;
+				s += String.format("\n`%s` ", p.name);
 			}
-			event.send(s + "```");
+			event.send(s);
 			return;
 		}
 
