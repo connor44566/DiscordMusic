@@ -8,20 +8,18 @@ import net.dv8tion.jda.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.hooks.EventListener;
 import net.dv8tion.jda.utils.SimpleLog;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class CommandManager
 {
-	private List<GenericCommand> noPrivateCommands = new LinkedList<>();
-	private List<GenericCommand> commands = new LinkedList<>();
-	private CommandListener listener = new CommandListenerImpl();
-	private MusicBot bot;
-	private final SimpleLog LOG = SimpleLog.getLog("CommandManager");
+	private final List<GenericCommand> noPrivateCommands = new LinkedList<>();
+	private final List<GenericCommand> commands = new LinkedList<>();
+	private final List<CommandListener<GenericCommand>> listeners = new LinkedList<>();
+	private final MusicBot bot;
+	private final static SimpleLog LOG = SimpleLog.getLog("CommandManager");
 
 	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 10, 5, TimeUnit.MINUTES, new LinkedBlockingQueue<>(), r -> {
 		final Thread t = new Thread(r, "CommandExecutorThread");
@@ -53,6 +51,8 @@ public class CommandManager
 			if (event instanceof MessageReceivedEvent)
 				handleMessage((MessageReceivedEvent) event);
 		});
+
+		listeners.add(new CommandListenerImpl());
 	}
 
 	private void handleMessage(MessageReceivedEvent event)
@@ -65,6 +65,8 @@ public class CommandManager
 			if((bot.config.prefix + c.getAlias()).equalsIgnoreCase(com))
 			{
 				executor.submit(() -> c.invoke(new GenericCommand.CommandEvent(event)));
+				for(CommandListener<GenericCommand> listener : listeners)
+					listener.onCommand(c);
 				return;
 			}
 		}
@@ -75,6 +77,8 @@ public class CommandManager
 			if((bot.config.prefix + c.getAlias()).equalsIgnoreCase(com))
 			{
 				executor.submit(() -> c.invoke(new GenericCommand.CommandEvent(event)));
+				for(CommandListener<GenericCommand> listener : listeners)
+					listener.onCommand(c);
 				return;
 			}
 		}
@@ -85,12 +89,12 @@ public class CommandManager
 	 *
 	 * @param listener A CommandListener implementation.
 	 */
-	public void setCommandListener(CommandListener listener)
+	public void addCommandListener(CommandListener<GenericCommand> listener)
 	{
 		if (listener == null)
 			LOG.log(new NullPointerException("Listener to override can not be null!"));
 		else
-			this.listener = listener;
+			this.listeners.add(listener);
 	}
 
 	/**
@@ -117,26 +121,31 @@ public class CommandManager
 	 *
 	 * @param command GenericCommand.
 	 */
-	public void registerCommand(Object command)
+	public void registerCommand(GenericCommand command)
 	{
 		if (!(command instanceof GenericCommand))
 		{
 			LOG.log(new IllegalArgumentException("Command must implement GenericCommand."));
 			return;
 		}
-		if (((GenericCommand) command).isPrivate())
-			commands.add((GenericCommand) command);
+		if ((command).isPrivate())
+			commands.add(command);
 		else
-			noPrivateCommands.add((GenericCommand) command);
+			noPrivateCommands.add(command);
 	}
 
-	public static class CommandListenerImpl implements CommandListener
+	public static class CommandListenerImpl implements CommandListener<GenericCommand>
 	{
+		private Map<GenericCommand, Integer> usage = new HashMap<>();
 
 		@Override
 		public void onCommand(GenericCommand command)
 		{
-			// TODO: Add for logs.
+			if(usage.containsKey(command))
+				usage.put(command, usage.get(command) + 1);
+			else
+				usage.put(command, 1);
+			LOG.log(SimpleLog.Level.INFO, "Used: " + command.getAlias() + " [" + usage.get(command) + "]");
 		}
 
 	}

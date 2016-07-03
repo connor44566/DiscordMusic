@@ -38,6 +38,7 @@ public class PlayCommand extends GenericCommand
 	public void invoke(CommandEvent event)
 	{
 		MusicPlayer player = new MusicPlayer();
+		player.setVolume(.5f); // 50% volume
 		if (event.guild.getAudioManager().getSendingHandler() != null)
 		{
 			try

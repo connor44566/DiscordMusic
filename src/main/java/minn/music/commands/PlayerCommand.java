@@ -73,8 +73,19 @@ public class PlayerCommand extends GenericCommand
 					throw new NullPointerException("No queued songs.");
 				}
 
-				player.skipToNext();
-				throw new NullPointerException("Skipped current song.");
+				try {
+					int amount = Integer.parseInt(input);
+					int i;
+					for(i = 0; i < amount && !player.getAudioQueue().isEmpty(); i++)
+					{
+						player.skipToNext();
+					}
+					throw new NullPointerException("Skipped " + i + " song"+ ((i == 1) ? "" : "s") + ".");
+				} catch (NumberFormatException e)
+				{
+					player.skipToNext();
+					throw new NullPointerException("Skipped current song.");
+				}
 			} catch (ClassCastException e)
 			{
 				throw new ClassCastException("Player is not available.");
