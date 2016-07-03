@@ -2,10 +2,11 @@ package minn.music.commands;
 
 import minn.music.util.TimeUtil;
 
-import java.lang.management.ManagementFactory;
-
 public class UptimeCommand extends GenericCommand
 {
+
+	public static long start;
+
 	@Override
 	public String getAlias()
 	{
@@ -15,6 +16,6 @@ public class UptimeCommand extends GenericCommand
 	@Override
 	public void invoke(CommandEvent event)
 	{
-		event.send(TimeUtil.uptime(ManagementFactory.getRuntimeMXBean().getUptime()));
+		event.send(TimeUtil.uptime(System.currentTimeMillis() - start));
 	}
 }

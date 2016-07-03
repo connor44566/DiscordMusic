@@ -20,7 +20,7 @@ public class TimeUtil
 		long minutes = TimeUnit.MILLISECONDS.toMinutes(inMillis);
 		inMillis -= TimeUnit.MINUTES.toMillis(minutes);
 
-		long seconds = TimeUnit.MINUTES.toSeconds(inMillis);
+		long seconds = TimeUnit.MILLISECONDS.toSeconds(inMillis);
 
 		if (days > 0) {
 			times.add(String.format("**%d** day%s", days, days != 1 ? "s" : ""));

@@ -68,6 +68,17 @@ public class Config
 	{
 		try
 		{
+			if(isBase && !file.exists())
+			{
+				Config.createConfig(new JSONObject()
+						.put("prefix", "")
+						.put("token", "")
+						.put("owner", "")
+						.put("home", "")
+						.put("logChan", ""), "Base.json");
+				LOG.fatal("Config file is missing. It has been generated and you need to populate it.");
+				System.exit(1);
+			}
 			readJSON(new JSONObject(new String(Files.readAllBytes(Paths.get(file.toURI())))));
 		} catch (IOException e)
 		{

@@ -39,12 +39,13 @@ public class Main
 		}
 		final int[] i = {0};
 		new MusicBot(manager -> {
+			UptimeCommand.start = System.currentTimeMillis();
 			AtomicReference<GenericCommand> command = new AtomicReference<>();
 
 			manager.registerCommand(new PingCommand());
 			manager.registerCommand(new JoinCommand(manager.bot));
 			manager.registerCommand(new PlayCommand());
-			manager.registerCommand(new ListCommands(manager.bot));
+
 			manager.registerCommand(new EvalCommand(manager.bot));
 			manager.registerCommand(new StreamingCommand(manager.bot));
 			manager.registerCommand(new PlayerCommand(manager.bot));
@@ -106,6 +107,9 @@ public class Main
 				}
 			}, false));
 
+			command.set(new ListCommands(manager.bot));
+			manager.registerCommand(command.get());
+			manager.registerCommand(new _Alias_("help", command.get()));
 
 			manager.registerCommand(new GenericCommand()
 			{
