@@ -48,6 +48,7 @@ public class Main
 			manager.registerCommand(new EvalCommand(manager.bot));
 			manager.registerCommand(new StreamingCommand(manager.bot));
 			manager.registerCommand(new PlayerCommand(manager.bot));
+			manager.registerCommand(new UptimeCommand());
 
 			command.set(new ListCommand());
 			manager.registerCommand(command.get());
@@ -130,7 +131,6 @@ public class Main
 
 			LOG.info((++i[0]) + " shards ready!");
 		}, shards, cfg);
-
 	}
 
 	public static void addCustom(MusicBot bot, CommandManager manager)
