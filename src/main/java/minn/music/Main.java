@@ -67,7 +67,7 @@ public class Main
 				public void invoke(CommandEvent event)
 				{
 					MusicPlayer player = (MusicPlayer) event.guild.getAudioManager().getSendingHandler();
-					if(running.containsKey(event.guild.getId()) && running.get(event.guild.getId()))
+					if (running.containsKey(event.guild.getId()) && running.get(event.guild.getId()))
 					{
 						event.send("Already updating.");
 						return;
@@ -130,8 +130,37 @@ public class Main
 									Permission.VOICE_SPEAK)));
 				}
 			});
+			manager.registerCommand(new GenericCommand()
+			{
+				@Override
+				public String getAlias()
+				{
+					return "exit";
+				}
+
+				@Override
+				public void invoke(CommandEvent event)
+				{
+					if(!event.author.getId().equals(MusicBot.config.owner))
+					{
+						event.send("You cannot use this command.");
+						return;
+					}
+					event.send("Shutting down...");
+					event.api.shutdown();
+					System.exit(1);
+				}
+			});
 
 			addCustom(manager.bot, manager);
+
+			try
+			{
+				manager.registerCommand(new PythonEval(manager.bot));
+			} catch (IOException e)
+			{
+				e.printStackTrace();
+			}
 
 			LOG.info((++i[0]) + " shards ready!");
 		}, shards, cfg);
@@ -139,9 +168,9 @@ public class Main
 
 	public static void addCustom(MusicBot bot, CommandManager manager)
 	{
-		if (bot.config.get("custom") != null && bot.config.get("custom") instanceof JSONArray)
+		if (MusicBot.config.get("custom") != null && MusicBot.config.get("custom") instanceof JSONArray)
 		{
-			JSONArray arr = (JSONArray) bot.config.get("custom");
+			JSONArray arr = (JSONArray) MusicBot.config.get("custom");
 			arr.forEach(o ->
 			{
 				try

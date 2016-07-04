@@ -1,5 +1,6 @@
 package minn.music.commands;
 
+import minn.music.MusicBot;
 import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.entities.Message;
@@ -7,6 +8,7 @@ import net.dv8tion.jda.entities.MessageChannel;
 import net.dv8tion.jda.entities.User;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.utils.SimpleLog;
 
 import java.util.function.Consumer;
 
@@ -59,6 +61,9 @@ public abstract class GenericCommand
 	 */
 	public static class CommandEvent
 	{
+
+		private final static SimpleLog LOG = SimpleLog.getLog("CommandSender");
+
 		/**
 		 * Used if it allows private and guild invokes.
 		 */
@@ -83,7 +88,6 @@ public abstract class GenericCommand
 
 		public CommandEvent(MessageReceivedEvent event)
 		{
-			// TODO: implement
 			channel = event.getChannel();
 			guild = event.getGuild();
 			api = event.getJDA();
@@ -91,7 +95,8 @@ public abstract class GenericCommand
 			message = event.getMessage();
 			isPrivate = event.isPrivate();
 
-			String[] parts = message.getRawContent().split("\\s+", 2);
+			String trimmed = event.getMessage().getRawContent().substring(MusicBot.config.prefix.length()).trim();
+			String[] parts = trimmed.split("\\s+", 2);
 
 			if(parts.length > 1)
 			{
@@ -108,7 +113,6 @@ public abstract class GenericCommand
 
 		public CommandEvent(GuildMessageReceivedEvent event)
 		{
-			// TODO: implement
 			channel = event.getChannel();
 			guild = event.getGuild();
 			api = event.getJDA();
@@ -116,7 +120,8 @@ public abstract class GenericCommand
 			message = event.getMessage();
 			isPrivate = false;
 
-			String[] parts = message.getRawContent().split("\\s+", 2);
+			String trimmed = event.getMessage().getRawContent().substring(MusicBot.config.prefix.length()).trim();
+			String[] parts = trimmed.split("\\s+", 2);
 
 			if(parts.length > 1)
 			{
@@ -141,9 +146,9 @@ public abstract class GenericCommand
 			try
 			{
 				channel.sendMessageAsync(message, callback);
-			} catch (Exception ignored)
+			} catch (Exception e)
 			{
-
+				LOG.warn("A message was not sent due to " + e.getClass().getSimpleName() + ": " + e.getMessage());
 			}
 		}
 

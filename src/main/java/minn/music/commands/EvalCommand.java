@@ -29,7 +29,7 @@ public class EvalCommand extends GenericCommand
 	@Override
 	public void invoke(CommandEvent event)
 	{
-		if(!event.author.getId().equals(bot.config.owner))
+		if(!event.author.getId().equals(MusicBot.config.owner))
 		{
 			event.send("You are not allowed to perform that command.");
 			return;
@@ -46,7 +46,8 @@ public class EvalCommand extends GenericCommand
 
 		try
 		{
-			o = engine.eval("(function() {" + event.allArgs + "\n})()");
+			engine.eval("imports = new JavaImporter(java.util, java.io, java.net, java.math)");
+			o = engine.eval("(function() {with(imports) {" + event.allArgs + "\n}})()");
 		} catch (Exception e)
 		{
 			o = e;

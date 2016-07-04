@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 
 public class MusicBot implements EventListener
 {
-	public Config config;
+	public static Config config;
 	private final static SimpleLog LOG = SimpleLog.getLog("MusicBot");
 	public final List<CommandManager> managers = new LinkedList<>();
 	private Consumer<CommandManager> callback;

@@ -57,15 +57,17 @@ public class CommandManager
 
 	private void handleMessage(MessageReceivedEvent event)
 	{
-		if(!event.getMessage().getRawContent().startsWith(bot.config.prefix) || event.getAuthor() == event.getJDA().getSelfInfo())
+		if (!event.getMessage().getRawContent().startsWith(MusicBot.config.prefix) || event.getAuthor() == event.getJDA().getSelfInfo())
 			return;
-		final String com = event.getMessage().getRawContent().split("\\s+", 2)[0];
+		String trimmed = event.getMessage().getRawContent().substring(MusicBot.config.prefix.length()).trim();
+		if (trimmed.isEmpty()) return;
+		final String com = trimmed.split("\\s+", 2)[0];
 		for (GenericCommand c : commands)
 		{
-			if((bot.config.prefix + c.getAlias()).equalsIgnoreCase(com))
+			if (c.getAlias().equalsIgnoreCase(com))
 			{
 				executor.submit(() -> c.invoke(new GenericCommand.CommandEvent(event)));
-				for(CommandListener<GenericCommand> listener : listeners)
+				for (CommandListener<GenericCommand> listener : listeners)
 					listener.onCommand(c);
 				return;
 			}
@@ -74,10 +76,10 @@ public class CommandManager
 			return;
 		for (GenericCommand c : noPrivateCommands)
 		{
-			if((bot.config.prefix + c.getAlias()).equalsIgnoreCase(com))
+			if (c.getAlias().equalsIgnoreCase(com))
 			{
 				executor.submit(() -> c.invoke(new GenericCommand.CommandEvent(event)));
-				for(CommandListener<GenericCommand> listener : listeners)
+				for (CommandListener<GenericCommand> listener : listeners)
 					listener.onCommand(c);
 				return;
 			}
@@ -116,6 +118,7 @@ public class CommandManager
 	{
 		return Collections.unmodifiableList(new LinkedList<>(noPrivateCommands));
 	}
+
 	/**
 	 * Used to register a new {@link GenericCommand Command}.
 	 *
@@ -141,7 +144,7 @@ public class CommandManager
 		@Override
 		public void onCommand(GenericCommand command)
 		{
-			if(usage.containsKey(command))
+			if (usage.containsKey(command))
 				usage.put(command, usage.get(command) + 1);
 			else
 				usage.put(command, 1);
