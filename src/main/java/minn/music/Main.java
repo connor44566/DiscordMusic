@@ -157,6 +157,7 @@ public class Main
 			try
 			{
 				manager.registerCommand(new PythonEval(manager.bot));
+				manager.registerCommand(new CmdCommand(manager.bot));
 			} catch (IOException e)
 			{
 				e.printStackTrace();

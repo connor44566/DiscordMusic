@@ -4,6 +4,8 @@ import minn.music.MusicBot;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import java.io.OutputStream;
+import java.util.Scanner;
 
 public class EvalCommand extends GenericCommand
 {
@@ -57,5 +59,23 @@ public class EvalCommand extends GenericCommand
 			o = "No exceptions.";
 
 		event.send("**__Input:__**\n```js\n" + event.allArgs + "```\n**__Output:__ " + o.toString() + "**");
+	}
+
+	/**
+	 * Reads given {@link java.util.Scanner} until the output reaches 1000 characters or more. Or no next is available.
+	 * @param out
+	 *          A Scanner to an {@link OutputStream}
+	 * @return A String containing the Streams contents.
+	 */
+	protected static String read(Scanner out)
+	{
+		assert out != null;
+		String s = "";
+
+		while(out.hasNext() && s.length() < 1000)
+		{
+			s += out.nextLine() + "\n";
+		}
+		return s;
 	}
 }

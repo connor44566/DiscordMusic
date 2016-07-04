@@ -3,24 +3,24 @@ package minn.music.commands;
 import minn.music.MusicBot;
 import net.dv8tion.jda.utils.SimpleLog;
 
-import java.io.*;
 import java.util.Scanner;
 
-public class PythonEval extends EvalCommand
+public class CmdCommand extends EvalCommand
 {
-	private File f = new File("PewDie.py");
-	private final static SimpleLog LOG = SimpleLog.getLog("PythonEval");
+	private final static SimpleLog LOG = SimpleLog.getLog("CmdCommand");
 
-	public PythonEval(MusicBot bot) throws IOException
+	public CmdCommand(MusicBot bot)
 	{
 		super(bot);
 	}
 
+	@Override
 	public String getAlias()
 	{
-		return "py";
+		return "cmd";
 	}
 
+	@Override
 	public synchronized void invoke(CommandEvent event)
 	{
 		if(!event.author.getId().equals(MusicBot.config.owner))
@@ -31,17 +31,8 @@ public class PythonEval extends EvalCommand
 		try
 		{
 
-			// Create Python file
-			f.createNewFile();
-			f.deleteOnExit();
-			OutputStream stream = new BufferedOutputStream(new FileOutputStream(f));
-			stream.write(event.allArgs.getBytes());
-			stream.close();
-
 			// Start process
-			ProcessBuilder builder = new ProcessBuilder();
-			builder.command("python", f.getName());
-			Process p = builder.start();
+			Process p = Runtime.getRuntime().exec("cmd /c " + event.allArgs);
 
 			// Create Stream Scanner
 			Scanner sc = new Scanner(p.getInputStream());
