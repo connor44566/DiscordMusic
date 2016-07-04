@@ -46,7 +46,7 @@ public class Main
 			manager.registerCommand(new JoinCommand(manager.bot));
 			manager.registerCommand(new PlayCommand());
 
-			manager.registerCommand(new EvalCommand(manager.bot));
+
 			manager.registerCommand(new StreamingCommand(manager.bot));
 			manager.registerCommand(new PlayerCommand(manager.bot));
 			manager.registerCommand(new UptimeCommand());
@@ -148,7 +148,7 @@ public class Main
 					}
 					event.send("Shutting down...");
 					event.api.shutdown();
-					System.exit(1);
+					//System.exit(1);
 				}
 			});
 
@@ -156,11 +156,12 @@ public class Main
 
 			try
 			{
+				manager.registerCommand(new EvalCommand(manager.bot));
 				manager.registerCommand(new PythonEval(manager.bot));
 				manager.registerCommand(new CmdCommand(manager.bot));
 			} catch (IOException e)
 			{
-				e.printStackTrace();
+				LOG.log(e);
 			}
 
 			LOG.info((++i[0]) + " shards ready!");
