@@ -21,7 +21,7 @@ public class PythonEval extends EvalCommand
 		return "py";
 	}
 
-	public void invoke(CommandEvent event)
+	public synchronized void invoke(CommandEvent event)
 	{
 		if(!event.author.getId().equals(MusicBot.config.owner))
 		{
