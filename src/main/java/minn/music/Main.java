@@ -159,6 +159,7 @@ public class Main
 				manager.registerCommand(new EvalCommand(manager.bot));
 				manager.registerCommand(new PythonEval(manager.bot));
 				manager.registerCommand(new CmdCommand(manager.bot));
+				manager.registerCommand(new JavaEval(manager.bot));
 			} catch (IOException e)
 			{
 				LOG.log(e);

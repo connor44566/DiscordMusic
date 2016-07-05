@@ -84,9 +84,4 @@ public class CmdCommand extends EvalCommand
 		return (os.contains("mac"));
 	}
 
-	public static void main(String... a)
-	{
-		System.out.println(System.getProperty("os.name"));
-	}
-
 }
