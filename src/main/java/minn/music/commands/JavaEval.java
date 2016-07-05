@@ -37,12 +37,12 @@ public class JavaEval extends EvalCommand
 			f.createNewFile();
 			f.deleteOnExit();
 			OutputStream stream = new BufferedOutputStream(new FileOutputStream(f));
-			stream.write(("public class " + f.getName().replace(".java", "") + " {\n\tpublic static void main(String... a)\n{\n\t" + event.allArgs + "\n\t}\n}").getBytes());
+			stream.write(getBodyWithLines(event.allArgs).getBytes());
 			stream.close();
 			try
 			{
 				compile();
-			} catch (UnexpectedException e) // Compilation failed with error
+			} catch (Exception e) // Compilation failed with error
 			{
 				event.send(e.getMessage());
 				return;
@@ -51,7 +51,7 @@ public class JavaEval extends EvalCommand
 
 			// Start process
 			ProcessBuilder builder = new ProcessBuilder();
-			builder.command("java",  out.getName().replace(".class", ""));
+			builder.command("java", out.getName().replace(".class", ""));
 			Process p = builder.start();
 
 			// Create Stream Scanner
@@ -80,6 +80,8 @@ public class JavaEval extends EvalCommand
 	private void compile() throws IOException, InterruptedException
 	{
 		LOG.debug("Starting to compile " + f.getName());
+		if(!f.exists())
+			throw new UnexpectedException("Unable to compile source file.");
 		ProcessBuilder builder = new ProcessBuilder();
 		builder.command("javac", f.getName());
 		Process p = builder.start();
@@ -97,5 +99,24 @@ public class JavaEval extends EvalCommand
 		p.waitFor();
 		p.destroyForcibly();
 		LOG.debug("Finished compilation");
+	}
+
+	private String getBodyWithLines(String code)
+	{
+		String body =
+				"import java.util.*;\n" +
+				"import java.math.*;\n" +
+				"import java.net.*;\n" +
+				"import java.io.*;\n" +
+				"import java.util.concurrent.*;\n" +
+				"import java.time.*;\n" +
+				"import java.lang.*;\n" +
+				"public class " + f.getName().replace(".java", "") + "\n{" +
+				"\n\tpublic static void main(String... a)" +
+				"\n\t{\n";
+		String[] lines = code.split("\n");
+		for (String line : lines)
+			body += "\t\t" + line + ";";
+		return body + "\n\t}\n}";
 	}
 }

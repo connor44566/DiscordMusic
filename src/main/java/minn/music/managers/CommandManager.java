@@ -119,6 +119,11 @@ public class CommandManager
 		return Collections.unmodifiableList(new LinkedList<>(noPrivateCommands));
 	}
 
+	public JDA getJDA()
+	{
+		return api;
+	}
+
 	/**
 	 * Used to register a new {@link GenericCommand Command}.
 	 *

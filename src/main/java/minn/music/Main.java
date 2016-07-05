@@ -147,8 +147,7 @@ public class Main
 						return;
 					}
 					event.send("Shutting down...");
-					event.api.shutdown();
-					//System.exit(1);
+					manager.bot.managers.forEach(m -> m.getJDA().shutdown());
 				}
 			});
 
