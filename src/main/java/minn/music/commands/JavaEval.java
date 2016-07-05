@@ -116,7 +116,7 @@ public class JavaEval extends EvalCommand
 				"\n\t{\n";
 		String[] lines = code.split("\n");
 		for (String line : lines)
-			body += "\t\t" + line + ";";
+			body += "\t\t" + line /*+ ";"*/ + "\n";  // Not appending ; because it breaks if / else without {
 		return body + "\n\t}\n}";
 	}
 }
