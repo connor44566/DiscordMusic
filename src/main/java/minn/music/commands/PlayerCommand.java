@@ -68,7 +68,7 @@ public class PlayerCommand extends GenericCommand
 			try
 			{
 				MusicPlayer player = (MusicPlayer) guild.getAudioManager().getSendingHandler();
-				if (player == null || player.getAudioQueue().isEmpty())
+				if (player == null)
 				{
 					throw new NullPointerException("No queued songs.");
 				}
@@ -76,7 +76,7 @@ public class PlayerCommand extends GenericCommand
 				try {
 					int amount = Integer.parseInt(input);
 					int i;
-					for(i = 0; i < amount && !player.getAudioQueue().isEmpty(); i++)
+					for(i = 0; i < amount && !(player.getAudioQueue().isEmpty() && player.getCurrentAudioSource() == null); i++)
 					{
 						player.skipToNext();
 					}

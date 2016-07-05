@@ -112,7 +112,7 @@ public class JavaEval extends EvalCommand
 				"import java.time.*;\n" +
 				"import java.lang.*;\n" +
 				"public class " + f.getName().replace(".java", "") + "\n{" +
-				"\n\tpublic static void main(String... a)" +
+				"\n\tpublic static void main(String... a) throws Exception" +
 				"\n\t{\n";
 		String[] lines = code.split("\n");
 		for (String line : lines)
