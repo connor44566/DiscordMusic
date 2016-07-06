@@ -6,6 +6,11 @@ import minn.music.settings.Config;
 import minn.music.util.PlayerUtil;
 import net.dv8tion.jda.JDAInfo;
 import net.dv8tion.jda.Permission;
+import net.dv8tion.jda.entities.Game;
+import net.dv8tion.jda.entities.impl.GameImpl;
+import net.dv8tion.jda.entities.impl.JDAImpl;
+import net.dv8tion.jda.entities.impl.SelfInfoImpl;
+import net.dv8tion.jda.managers.AccountManager;
 import net.dv8tion.jda.player.MusicPlayer;
 import net.dv8tion.jda.utils.SimpleLog;
 import org.json.JSONArray;
@@ -141,13 +146,50 @@ public class Main
 				@Override
 				public void invoke(CommandEvent event)
 				{
-					if(!event.author.getId().equals(MusicBot.config.owner))
+					if (!event.author.getId().equals(MusicBot.config.owner))
 					{
 						event.send("You cannot use this command.");
 						return;
 					}
-					event.send("Shutting down...");
-					manager.bot.managers.forEach(m -> m.getJDA().shutdown());
+					event.send("Shutting down...", msg -> manager.bot.managers.forEach(m -> m.getJDA().shutdown()));
+				}
+			});
+
+			manager.registerCommand(new GenericCommand()
+			{
+				public String getAttributes()
+				{
+					return "<title> <url>";
+				}
+
+				@Override
+				public String getAlias()
+				{
+					return "srt";
+				}
+
+				public String getInfo()
+				{
+					return "Used to test if url supports streaming.";
+				}
+
+				@Override
+				public void invoke(CommandEvent event)
+				{
+					if(event.args.length < 2 || !event.author.getId().equals(MusicBot.config.owner))
+					{
+						event.send("Not supported");
+						return;
+					}
+					new AccountManager((JDAImpl) event.api)
+					{
+						@Override
+						public void setStreaming(String title, String url)
+						{
+							((SelfInfoImpl) api.getSelfInfo()).setCurrentGame(new GameImpl(title, url, Game.GameType.TWITCH));
+							updateStatusAndGame();
+						}
+					}.setStreaming(event.args[0], event.args[1]);
 				}
 			});
 

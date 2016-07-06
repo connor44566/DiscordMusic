@@ -49,8 +49,9 @@ public class EvalCommand extends GenericCommand
 
 		try
 		{
-			engine.eval("imports = new JavaImporter(java.util, java.io, java.net, java.math)");
-			o = engine.eval("(function() {with(imports) {" + event.allArgs + "\n}})()");
+			engine.eval("EntityUtil = Java.type(\"minn.music.util.EntityUtil\")");
+			engine.eval("imports = new JavaImporter(java.util, java.io, java.net)");
+			o = engine.eval("(function() {with(imports) {try{" + event.allArgs + "\n}catch(ex){return ex}}})()");
 		} catch (Exception e)
 		{
 			o = e;
@@ -59,7 +60,7 @@ public class EvalCommand extends GenericCommand
 		if(o == null)
 			o = "No exceptions.";
 
-		event.send("**__Input:__**\n```js\n" + event.allArgs + "```\n**__Output:__ " + o.toString() + "**");
+		event.send("**__Input:__**\n```js\n" + event.allArgs + "```\n**__Output:__ `" + o.toString() + "`**");
 	}
 
 	/**

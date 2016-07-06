@@ -66,7 +66,15 @@ public class CommandManager
 		{
 			if (c.getAlias().equalsIgnoreCase(com))
 			{
-				executor.submit(() -> c.invoke(new GenericCommand.CommandEvent(event)));
+				executor.submit(() -> {
+					try
+					{
+						c.invoke(new GenericCommand.CommandEvent(event));
+					} catch (Exception e)
+					{
+						LOG.log(e);
+					}
+				});
 				for (CommandListener<GenericCommand> listener : getListeners())
 					listener.onCommand(c);
 				return;
@@ -78,7 +86,15 @@ public class CommandManager
 		{
 			if (c.getAlias().equalsIgnoreCase(com))
 			{
-				executor.submit(() -> c.invoke(new GenericCommand.CommandEvent(event)));
+				executor.submit(() -> {
+					try
+					{
+						c.invoke(new GenericCommand.CommandEvent(event));
+					} catch (Exception e)
+					{
+						LOG.log(e);
+					}
+				});
 				for (CommandListener<GenericCommand> listener : getListeners())
 					listener.onCommand(c);
 				return;

@@ -82,7 +82,7 @@ public class PlayCommand extends GenericCommand
 		for (AudioSource s : sources)
 		{
 			AudioInfo info = s.getInfo();
-			if(info.isLive())
+			if (info.isLive())
 			{
 				error++;
 				continue;
@@ -92,7 +92,8 @@ public class PlayCommand extends GenericCommand
 				player.getAudioQueue().add(s);
 				if (!player.isPlaying())
 				{
-					currentMessage[0].updateMessageAsync("**Started playing...**", null);
+					if (currentMessage[0] != null)
+						currentMessage[0].updateMessageAsync("**Started playing...**", null);
 					player.play();
 				}
 			} else
