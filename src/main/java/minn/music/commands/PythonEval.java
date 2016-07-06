@@ -65,7 +65,7 @@ public class PythonEval extends EvalCommand
 					if (!p.isAlive())
 						return;
 					p.destroyForcibly();
-					LOG.debug("Process has been terminated. Exceeded time limit.");
+					LOG.warn("Process has been terminated. Exceeded time limit.");
 				}
 			}, 3000, 100);
 

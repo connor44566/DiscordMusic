@@ -62,24 +62,24 @@ public class CommandManager
 		String trimmed = event.getMessage().getRawContent().substring(MusicBot.config.prefix.length()).trim();
 		if (trimmed.isEmpty()) return;
 		final String com = trimmed.split("\\s+", 2)[0];
-		for (GenericCommand c : commands)
+		for (GenericCommand c : getCommands())
 		{
 			if (c.getAlias().equalsIgnoreCase(com))
 			{
 				executor.submit(() -> c.invoke(new GenericCommand.CommandEvent(event)));
-				for (CommandListener<GenericCommand> listener : listeners)
+				for (CommandListener<GenericCommand> listener : getListeners())
 					listener.onCommand(c);
 				return;
 			}
 		}
 		if (event.isPrivate())
 			return;
-		for (GenericCommand c : noPrivateCommands)
+		for (GenericCommand c : getNonPrivateCommands())
 		{
 			if (c.getAlias().equalsIgnoreCase(com))
 			{
 				executor.submit(() -> c.invoke(new GenericCommand.CommandEvent(event)));
-				for (CommandListener<GenericCommand> listener : listeners)
+				for (CommandListener<GenericCommand> listener : getListeners())
 					listener.onCommand(c);
 				return;
 			}
@@ -117,6 +117,11 @@ public class CommandManager
 	public List<GenericCommand> getNonPrivateCommands()
 	{
 		return Collections.unmodifiableList(new LinkedList<>(noPrivateCommands));
+	}
+
+	public List<CommandListener<GenericCommand>> getListeners()
+	{
+		return Collections.unmodifiableList(new LinkedList<>(listeners));
 	}
 
 	public JDA getJDA()
