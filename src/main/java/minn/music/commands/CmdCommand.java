@@ -4,6 +4,7 @@ import minn.music.MusicBot;
 import net.dv8tion.jda.utils.SimpleLog;
 
 import java.util.Scanner;
+import java.util.TimerTask;
 
 public class CmdCommand extends EvalCommand
 {
@@ -51,10 +52,23 @@ public class CmdCommand extends EvalCommand
 			// Read streams
 			if (sc.hasNext())
 				event.send(read(sc));
-			else if (scErr.hasNext())
+			if (scErr.hasNext())
 				event.send("ERROR: " + read(scErr));
 			else
 				event.send("✅");
+
+			// Start KeepAlive
+			timer.schedule(new TimerTask()
+			{
+				@Override
+				public void run()
+				{
+					if (!p.isAlive())
+						return;
+					p.destroyForcibly();
+					LOG.debug("Process has been terminated. Exceeded time limit.");
+				}
+			}, 3000, 100);
 
 			// Destroy Process
 			p.waitFor();

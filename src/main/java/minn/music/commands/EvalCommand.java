@@ -4,13 +4,14 @@ import minn.music.MusicBot;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
-import java.io.OutputStream;
 import java.util.Scanner;
+import java.util.Timer;
 
 public class EvalCommand extends GenericCommand
 {
 
-	private MusicBot bot;
+	protected MusicBot bot;
+	protected final Timer timer = new Timer(false); // Used for KeepAlive
 
 	public EvalCommand(MusicBot bot)
 	{
@@ -63,18 +64,18 @@ public class EvalCommand extends GenericCommand
 
 	/**
 	 * Reads given {@link java.util.Scanner} until the output reaches 1000 characters or more. Or no next is available.
-	 * @param out
-	 *          A Scanner to an {@link OutputStream}
+	 * @param in
+	 *          A Scanner to an {@link java.io.InputStream InputStream}
 	 * @return A String containing the Streams contents.
 	 */
-	protected static String read(Scanner out)
+	protected static String read(Scanner in)
 	{
-		assert out != null;
+		assert in != null;
 		String s = "";
 
-		while(out.hasNext() && s.length() < 1000)
+		while(in.hasNext() && s.length() < 1000)
 		{
-			s += out.nextLine() + "\n";
+			s += in.nextLine() + "\n";
 		}
 		return s;
 	}

@@ -6,6 +6,7 @@ import net.dv8tion.jda.utils.SimpleLog;
 import java.io.*;
 import java.rmi.UnexpectedException;
 import java.util.Scanner;
+import java.util.TimerTask;
 
 public class JavaEval extends EvalCommand
 {
@@ -61,10 +62,23 @@ public class JavaEval extends EvalCommand
 			// Read streams
 			if (sc.hasNext())
 				event.send(read(sc));
-			else if (scErr.hasNext())
+			if (scErr.hasNext())
 				event.send("ERROR: " + read(scErr));
 			else
 				event.send("✅");
+
+			// Start KeepAlive
+			timer.schedule(new TimerTask()
+			{
+				@Override
+				public void run()
+				{
+					if (!p.isAlive())
+						return;
+					p.destroyForcibly();
+					LOG.debug("Process has been terminated. Exceeded time limit.");
+				}
+			}, 3000, 100);
 
 			// Destroy Process
 			p.waitFor();
@@ -80,7 +94,7 @@ public class JavaEval extends EvalCommand
 	private void compile() throws IOException, InterruptedException
 	{
 		LOG.debug("Starting to compile " + f.getName());
-		if(!f.exists())
+		if (!f.exists())
 			throw new UnexpectedException("Unable to compile source file.");
 		ProcessBuilder builder = new ProcessBuilder();
 		builder.command("javac", f.getName());
@@ -105,15 +119,15 @@ public class JavaEval extends EvalCommand
 	{
 		String body =
 				"import java.util.*;\n" +
-				"import java.math.*;\n" +
-				"import java.net.*;\n" +
-				"import java.io.*;\n" +
-				"import java.util.concurrent.*;\n" +
-				"import java.time.*;\n" +
-				"import java.lang.*;\n" +
-				"public class " + f.getName().replace(".java", "") + "\n{" +
-				"\n\tpublic static void main(String... a) throws Exception" +
-				"\n\t{\n";
+						"import java.math.*;\n" +
+						"import java.net.*;\n" +
+						"import java.io.*;\n" +
+						"import java.util.concurrent.*;\n" +
+						"import java.time.*;\n" +
+						"import java.lang.*;\n" +
+						"public class " + f.getName().replace(".java", "") + "\n{" +
+						"\n\tpublic static void main(String... a) throws Exception" +
+						"\n\t{\n";
 		String[] lines = code.split("\n");
 		for (String line : lines)
 			body += "\t\t" + line /*+ ";"*/ + "\n";  // Not appending ; because it breaks if / else without {
