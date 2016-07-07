@@ -33,8 +33,6 @@ public class MusicBot implements EventListener
 	public MusicBot(Consumer<CommandManager> callback, int shards, Config cfg)
 	{
 		assert shards > 0 && callback != null;
-
-
 		try
 		{
 			config = cfg;

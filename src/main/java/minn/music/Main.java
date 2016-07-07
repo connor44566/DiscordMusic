@@ -43,171 +43,178 @@ public class Main
 			LOG.info("Shards: " + shards);
 		}
 		final int[] i = {0};
-		new MusicBot(manager -> {
-			UptimeCommand.start = System.currentTimeMillis();
-			AtomicReference<GenericCommand> command = new AtomicReference<>();
+		try
+		{
+			new MusicBot(manager -> {
+				UptimeCommand.start = System.currentTimeMillis();
+				AtomicReference<GenericCommand> command = new AtomicReference<>();
 
-			manager.registerCommand(new PingCommand());
-			manager.registerCommand(new JoinCommand(manager.bot));
-			manager.registerCommand(new PlayCommand());
+				manager.registerCommand(new PingCommand());
+				manager.registerCommand(new JoinCommand(manager.bot));
+				manager.registerCommand(new PlayCommand());
 
 
-			manager.registerCommand(new StreamingCommand(manager.bot));
-			manager.registerCommand(new PlayerCommand(manager.bot));
-			manager.registerCommand(new UptimeCommand());
+				manager.registerCommand(new StreamingCommand(manager.bot));
+				manager.registerCommand(new PlayerCommand(manager.bot));
+				manager.registerCommand(new UptimeCommand());
 
-			command.set(new ListCommand());
-			manager.registerCommand(command.get());
-			manager.registerCommand(new _Alias_("current", new GenericCommand()
-			{
-				private Map<String, Boolean> running = new HashMap<>();
-
-				@Override
-				public String getAlias()
+				command.set(new ListCommand());
+				manager.registerCommand(command.get());
+				manager.registerCommand(new _Alias_("current", new GenericCommand()
 				{
-					return " ";
-				}
+					private Map<String, Boolean> running = new HashMap<>();
 
-				@Override
-				public void invoke(CommandEvent event)
-				{
-					MusicPlayer player = (MusicPlayer) event.guild.getAudioManager().getSendingHandler();
-					if (running.containsKey(event.guild.getId()) && running.get(event.guild.getId()))
+					@Override
+					public String getAlias()
 					{
-						event.send("Already updating.");
-						return;
+						return " ";
 					}
-					final boolean[] isReturned = {true};
-					if (player == null)
-						event.send("Nothing playing.");
-					else
-						event.send(player.getCurrentAudioSource().getInfo().getTitle() + "\n\n" + PlayerUtil.convert(player.getCurrentAudioSource().getInfo().getDuration(), player.getCurrentTimestamp(), player.getVolume()), m ->
+
+					@Override
+					public void invoke(CommandEvent event)
+					{
+						MusicPlayer player = (MusicPlayer) event.guild.getAudioManager().getSendingHandler();
+						if (running.containsKey(event.guild.getId()) && running.get(event.guild.getId()))
 						{
-							new Thread(() -> {
-								LOG.info("Debug: Returned");
-
-								running.put(event.guild.getId(), true);
-								isReturned[0] = m != null;
-								for (int i = 0; i < 5; i++)
-								{
-									try
-									{
-										Thread.sleep(10000);
-										if (isReturned[0])
-											m.updateMessageAsync(
-													player.getCurrentAudioSource().getInfo().getTitle() + "\n\n" + PlayerUtil.convert(player.getCurrentAudioSource().getInfo().getDuration(), player.getCurrentTimestamp(), player.getVolume())
-													, ms -> isReturned[0] = true);
-										else
-											break;
-									} catch (InterruptedException e)
-									{
-										LOG.log(e);
-									}
-									LOG.info("Debug: Updated");
-								}
-								LOG.info("Debug: Finished");
-								running.put(event.guild.getId(), false);
-							}, "Current").start();
-						});
-				}
-			}, false));
-
-			command.set(new ListCommands(manager.bot));
-			manager.registerCommand(command.get());
-			manager.registerCommand(new _Alias_("help", command.get()));
-
-			manager.registerCommand(new GenericCommand()
-			{
-				@Override
-				public String getAlias()
-				{
-					return "invite";
-				}
-
-				@Override
-				public void invoke(CommandEvent event)
-				{
-					event.send(String.format("**Invite: %s**",
-							event.api.getSelfInfo().getAuthUrl(
-									Permission.MESSAGE_WRITE,
-									Permission.MESSAGE_READ,
-									Permission.VOICE_CONNECT,
-									Permission.VOICE_SPEAK)));
-				}
-			});
-			manager.registerCommand(new GenericCommand()
-			{
-				@Override
-				public String getAlias()
-				{
-					return "exit";
-				}
-
-				@Override
-				public void invoke(CommandEvent event)
-				{
-					if (!event.author.getId().equals(MusicBot.config.owner))
-					{
-						event.send("You cannot use this command.");
-						return;
-					}
-					event.send("Shutting down...", msg -> manager.bot.managers.forEach(m -> m.getJDA().shutdown()));
-				}
-			});
-
-			manager.registerCommand(new GenericCommand()
-			{
-				public String getAttributes()
-				{
-					return "<title> <url>";
-				}
-
-				@Override
-				public String getAlias()
-				{
-					return "srt";
-				}
-
-				public String getInfo()
-				{
-					return "Used to test if url supports streaming.";
-				}
-
-				@Override
-				public void invoke(CommandEvent event)
-				{
-					if(event.args.length < 2 || !event.author.getId().equals(MusicBot.config.owner))
-					{
-						event.send("Not supported");
-						return;
-					}
-					new AccountManager((JDAImpl) event.api)
-					{
-						@Override
-						public void setStreaming(String title, String url)
-						{
-							((SelfInfoImpl) api.getSelfInfo()).setCurrentGame(new GameImpl(title, url, Game.GameType.TWITCH));
-							updateStatusAndGame();
+							event.send("Already updating.");
+							return;
 						}
-					}.setStreaming(event.args[0], event.args[1]);
+						final boolean[] isReturned = {true};
+						if (player == null)
+							event.send("Nothing playing.");
+						else
+							event.send(player.getCurrentAudioSource().getInfo().getTitle() + "\n\n" + PlayerUtil.convert(player.getCurrentAudioSource().getInfo().getDuration(), player.getCurrentTimestamp(), player.getVolume()), m ->
+							{
+								new Thread(() -> {
+									LOG.info("Debug: Returned");
+
+									running.put(event.guild.getId(), true);
+									isReturned[0] = m != null;
+									for (int i = 0; i < 5; i++)
+									{
+										try
+										{
+											Thread.sleep(10000);
+											if (isReturned[0])
+												m.updateMessageAsync(
+														player.getCurrentAudioSource().getInfo().getTitle() + "\n\n" + PlayerUtil.convert(player.getCurrentAudioSource().getInfo().getDuration(), player.getCurrentTimestamp(), player.getVolume())
+														, ms -> isReturned[0] = true);
+											else
+												break;
+										} catch (InterruptedException e)
+										{
+											LOG.log(e);
+										}
+										LOG.info("Debug: Updated");
+									}
+									LOG.info("Debug: Finished");
+									running.put(event.guild.getId(), false);
+								}, "Current").start();
+							});
+					}
+				}, false));
+
+				command.set(new ListCommands(manager.bot));
+				manager.registerCommand(command.get());
+				manager.registerCommand(new _Alias_("help", command.get()));
+
+				manager.registerCommand(new GenericCommand()
+				{
+					@Override
+					public String getAlias()
+					{
+						return "invite";
+					}
+
+					@Override
+					public void invoke(CommandEvent event)
+					{
+						event.send(String.format("**Invite: %s**",
+								event.api.getSelfInfo().getAuthUrl(
+										Permission.MESSAGE_WRITE,
+										Permission.MESSAGE_READ,
+										Permission.VOICE_CONNECT,
+										Permission.VOICE_SPEAK)));
+					}
+				});
+				manager.registerCommand(new GenericCommand()
+				{
+					@Override
+					public String getAlias()
+					{
+						return "exit";
+					}
+
+					@Override
+					public void invoke(CommandEvent event)
+					{
+						if (!event.author.getId().equals(MusicBot.config.owner))
+						{
+							event.send("You cannot use this command.");
+							return;
+						}
+						event.send("Shutting down...", msg -> manager.bot.managers.forEach(m -> m.getJDA().shutdown()));
+					}
+				});
+
+				manager.registerCommand(new GenericCommand()
+				{
+					public String getAttributes()
+					{
+						return "<title> <url>";
+					}
+
+					@Override
+					public String getAlias()
+					{
+						return "srt";
+					}
+
+					public String getInfo()
+					{
+						return "Used to test if url supports streaming.";
+					}
+
+					@Override
+					public void invoke(CommandEvent event)
+					{
+						if (event.args.length < 2 || !event.author.getId().equals(MusicBot.config.owner))
+						{
+							event.send("Not supported");
+							return;
+						}
+						new AccountManager((JDAImpl) event.api)
+						{
+							@Override
+							public void setStreaming(String title, String url)
+							{
+								((SelfInfoImpl) api.getSelfInfo()).setCurrentGame(new GameImpl(title, url, Game.GameType.TWITCH));
+								updateStatusAndGame();
+							}
+						}.setStreaming(event.args[0], event.args[1]);
+					}
+				});
+
+				addCustom(manager.bot, manager);
+
+				try
+				{
+					manager.registerCommand(new EvalCommand(manager.bot));
+					manager.registerCommand(new PythonEval(manager.bot));
+					manager.registerCommand(new CmdCommand(manager.bot));
+					manager.registerCommand(new JavaEval(manager.bot));
+				} catch (IOException e)
+				{
+					LOG.log(e);
 				}
-			});
 
-			addCustom(manager.bot, manager);
-
-			try
-			{
-				manager.registerCommand(new EvalCommand(manager.bot));
-				manager.registerCommand(new PythonEval(manager.bot));
-				manager.registerCommand(new CmdCommand(manager.bot));
-				manager.registerCommand(new JavaEval(manager.bot));
-			} catch (IOException e)
-			{
-				LOG.log(e);
-			}
-
-			LOG.info((++i[0]) + " shards ready!");
-		}, shards, cfg);
+				LOG.info((++i[0]) + " shards ready!");
+			}, shards, cfg);
+		} catch (Exception e)
+		{
+			LOG.fatal(e);
+			System.exit(-1);
+		}
 	}
 
 	public static void addCustom(MusicBot bot, CommandManager manager)

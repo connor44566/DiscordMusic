@@ -15,7 +15,7 @@ public class Config
 {
 	// Generic information
 	public final static String BASE_URI = "Settings/";
-	protected final static SimpleLog LOG = SimpleLog.getLog("ConfigReader");
+	public final static SimpleLog LOG = SimpleLog.getLog("ConfigReader");
 	// Instance information
 	protected File cfg;
 	protected JSONObject object;
@@ -72,7 +72,7 @@ public class Config
 			{
 				Config.createConfig(new JSONObject()
 						.put("prefix", "")
-						.put("token", "")
+						.put("token", JSONObject.NULL)
 						.put("owner", "")
 						.put("home", "")
 						.put("logChan", ""), "Base.json");
@@ -92,20 +92,22 @@ public class Config
 		this.object = object;
 		if (isBase)
 		{
+			LOG.debug("Found Base.json");
 			if (object.isNull("token") || object.isNull("owner") || object.isNull("prefix"))
 			{
-				LOG.log(new IllegalArgumentException("Config file \"" + cfg + "\" is missing required fields. Please delete it and restart."));
+				LOG.log(new IllegalArgumentException("Config file \"" + cfg + "\" is missing required fields. Please refill config."));
 				Config.createConfig(new JSONObject()
 						.put("prefix", "")
-						.put("token", "")
+						.put("token", JSONObject.NULL)
 						.put("owner", "")
 						.put("home", "")
 						.put("logChan", ""), "Base.json");
 				return;
 			}
-			token = object.getString("token");
-			owner = object.getString("owner");
-			prefix = object.getString("prefix");
+			this.token = object.getString("token");
+			this.owner = object.getString("owner");
+			this.prefix = object.getString("prefix");
+			LOG.debug("Config: " + object.toString());
 		}
 		if (object.has("home") && !object.isNull("home"))
 			home = object.getString("home");
