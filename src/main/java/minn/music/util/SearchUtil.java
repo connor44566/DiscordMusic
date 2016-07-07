@@ -4,6 +4,7 @@ import com.mashape.unirest.http.Unirest;
 import org.json.JSONObject;
 
 import java.net.URLEncoder;
+import java.util.concurrent.TimeUnit;
 
 public class SearchUtil
 {
@@ -12,7 +13,8 @@ public class SearchUtil
 	{
 		try
 		{
-			return Unirest.get("http://random.cat/meow").asJson().getBody().getObject().getString("file");
+			String response = Unirest.get("http://random.cat/meow").asJsonAsync().get(1, TimeUnit.SECONDS).getBody().getObject().getString("file");
+			return response.isEmpty() ? "Something went wrong with the api." : response;
 		} catch (Exception e)
 		{
 			return e.toString();
@@ -31,7 +33,7 @@ public class SearchUtil
 		try
 		{
 			//noinspection deprecation
-			JSONObject o = Unirest.get("http://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tags=" + URLEncoder.encode(tags)).asJson().getBody().getObject();
+			JSONObject o = Unirest.get("http://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tags=" + URLEncoder.encode(tags)).asJsonAsync().get(1, TimeUnit.SECONDS).getBody().getObject();
 			if (o.isNull("data"))
 				return "";
 			o = o.getJSONObject("data");
