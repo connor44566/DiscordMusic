@@ -1,6 +1,9 @@
 package minn.music;
 
+import com.mashape.unirest.http.Unirest;
 import minn.music.commands.*;
+import minn.music.commands.external.CatCommand;
+import minn.music.commands.external.GifCommand;
 import minn.music.managers.CommandManager;
 import minn.music.settings.Config;
 import minn.music.util.PlayerUtil;
@@ -10,6 +13,8 @@ import net.dv8tion.jda.entities.Game;
 import net.dv8tion.jda.entities.impl.GameImpl;
 import net.dv8tion.jda.entities.impl.JDAImpl;
 import net.dv8tion.jda.entities.impl.SelfInfoImpl;
+import net.dv8tion.jda.events.ShutdownEvent;
+import net.dv8tion.jda.hooks.EventListener;
 import net.dv8tion.jda.managers.AccountManager;
 import net.dv8tion.jda.player.MusicPlayer;
 import net.dv8tion.jda.utils.SimpleLog;
@@ -57,6 +62,9 @@ public class Main
 				manager.registerCommand(new StreamingCommand(manager.bot));
 				manager.registerCommand(new PlayerCommand(manager.bot));
 				manager.registerCommand(new UptimeCommand());
+				manager.registerCommand(new AvatarCommand());
+				manager.registerCommand(new GifCommand());
+				manager.registerCommand(new CatCommand());
 
 				command.set(new ListCommand());
 				manager.registerCommand(command.get());
@@ -153,7 +161,27 @@ public class Main
 							event.send("You cannot use this command.");
 							return;
 						}
-						event.send("Shutting down...", msg -> manager.bot.managers.forEach(m -> m.getJDA().shutdown()));
+						event.send("Shutting down...", msg -> {
+							final int[] i = {0, 1};
+							if (cfg.get("shards") != null)
+								i[1] = (int) cfg.get("shards");
+							manager.bot.managers.forEach(m -> {
+								m.getJDA().addEventListener((EventListener) event1 -> {
+									if (event1 instanceof ShutdownEvent && ++i[0] == i[1])
+									{
+										try
+										{
+											Unirest.shutdown();
+										} catch (IOException e)
+										{
+											LOG.log(e);
+										}
+										System.exit(1);
+									}
+								});
+								m.getJDA().shutdown();
+							});
+						});
 					}
 				});
 

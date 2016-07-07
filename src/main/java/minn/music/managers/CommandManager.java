@@ -19,7 +19,7 @@ public class CommandManager
 	private final List<GenericCommand> commands = new LinkedList<>();
 	private final List<CommandListener<GenericCommand>> listeners = new LinkedList<>();
 	public final MusicBot bot;
-	private final static SimpleLog LOG = SimpleLog.getLog("CommandManager");
+	public final static SimpleLog LOG = SimpleLog.getLog("CommandManager");
 
 	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 10, 5, TimeUnit.MINUTES, new LinkedBlockingQueue<>(), r -> {
 		final Thread t = new Thread(r, "CommandExecutorThread");
