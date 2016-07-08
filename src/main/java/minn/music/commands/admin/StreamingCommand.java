@@ -1,7 +1,8 @@
-package minn.music.commands;
+package minn.music.commands.admin;
 
 
 import minn.music.MusicBot;
+import minn.music.commands.GenericCommand;
 
 public class StreamingCommand extends GenericCommand
 {

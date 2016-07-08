@@ -2,9 +2,18 @@ package minn.music;
 
 import com.mashape.unirest.http.Unirest;
 import minn.music.commands.*;
-import minn.music.commands.external.CatCommand;
-import minn.music.commands.external.DoggoComant;
-import minn.music.commands.external.GifCommand;
+import minn.music.commands.admin.StreamingCommand;
+import minn.music.commands.audio.JoinCommand;
+import minn.music.commands.audio.ListCommand;
+import minn.music.commands.audio.PlayCommand;
+import minn.music.commands.audio.PlayerCommand;
+import minn.music.commands.code.CmdCommand;
+import minn.music.commands.code.EvalCommand;
+import minn.music.commands.code.JavaEval;
+import minn.music.commands.code.PythonEval;
+import minn.music.commands.media.CatCommand;
+import minn.music.commands.media.DoggoComant;
+import minn.music.commands.media.GifCommand;
 import minn.music.managers.CommandManager;
 import minn.music.settings.Config;
 import minn.music.util.PlayerUtil;
@@ -57,97 +66,28 @@ public class Main
 				UptimeCommand.start = System.currentTimeMillis();
 				AtomicReference<GenericCommand> command = new AtomicReference<>();
 
-				manager.registerCommand(new PingCommand());
-				manager.registerCommand(new JoinCommand(manager.bot));
-				manager.registerCommand(new PlayCommand());
-
-
-				manager.registerCommand(new StreamingCommand(manager.bot));
-				manager.registerCommand(new PlayerCommand(manager.bot));
-				manager.registerCommand(new UptimeCommand(manager.getJDA()));
-				manager.registerCommand(new AvatarCommand());
-				manager.registerCommand(new GifCommand());
-				manager.registerCommand(new CatCommand());
-				manager.registerCommand(new DoggoComant());
-
-				command.set(new ListCommand());
-				manager.registerCommand(command.get());
-				manager.registerCommand(new _Alias_("current", new GenericCommand()
-				{
-					private Map<String, Boolean> running = new HashMap<>();
-
-					@Override
-					public String getAlias()
-					{
-						return " ";
-					}
-
-					@Override
-					public void invoke(CommandEvent event)
-					{
-						MusicPlayer player = (MusicPlayer) event.guild.getAudioManager().getSendingHandler();
-						if (running.containsKey(event.guild.getId()) && running.get(event.guild.getId()))
-						{
-							event.send("Already updating.");
-							return;
-						}
-						final boolean[] isReturned = {true};
-						if (player == null)
-							event.send("Nothing playing.");
-						else
-							event.send(player.getCurrentAudioSource().getInfo().getTitle() + "\n\n" + PlayerUtil.convert(player.getCurrentAudioSource().getInfo().getDuration(), player.getCurrentTimestamp(), player.getVolume()), m -> new Thread(() ->
-							{
-								LOG.debug("Debug: Returned");
-
-								running.put(event.guild.getId(), true);
-								isReturned[0] = m != null;
-								for (int i = 0; i < 5; i++)
-								{
-									try
-									{
-										Thread.sleep(10000);
-										if (isReturned[0])
-											m.updateMessageAsync(
-													player.getCurrentAudioSource().getInfo().getTitle() + "\n\n" + PlayerUtil.convert(player.getCurrentAudioSource().getInfo().getDuration(), player.getCurrentTimestamp(), player.getVolume())
-													, ms -> isReturned[0] = true);
-										else
-											break;
-									} catch (InterruptedException e)
-									{
-										LOG.log(e);
-									}
-									LOG.debug("Debug: Updated");
-								}
-								LOG.debug("Debug: Finished");
-								running.put(event.guild.getId(), false);
-							}, "Current").start());
-					}
-				}, false));
-
-				command.set(new ListCommands(manager.bot));
-				manager.registerCommand(command.get());
-				manager.registerCommand(new _Alias_("help", command.get()));
-
-				manager.registerCommand(new GenericCommand()
+				// Audio
+				command.set(new Container(new PlayCommand(), "audio")
 				{
 					@Override
-					public String getAlias()
+					public boolean isPrivate()
 					{
-						return "invite";
-					}
-
-					@Override
-					public void invoke(CommandEvent event)
-					{
-						event.send(String.format("**Invite: %s**",
-								event.api.getSelfInfo().getAuthUrl(
-										Permission.MESSAGE_WRITE,
-										Permission.MESSAGE_READ,
-										Permission.VOICE_CONNECT,
-										Permission.VOICE_SPEAK)));
+						return false;
 					}
 				});
-				manager.registerCommand(new GenericCommand()
+				((Container) command.get()).addItem(new JoinCommand(manager.bot));
+				((Container) command.get()).addItem(new PlayerCommand(manager.bot));
+				((Container) command.get()).addItem(new ListCommand());
+				manager.registerContainer((Container) command.get());
+
+				// Media
+				command.set(new Container(new GifCommand(), "media"));
+				((Container) command.get()).addItem(new CatCommand());
+				((Container) command.get()).addItem(new DoggoComant());
+				manager.registerContainer((Container) command.get());
+
+				// Admin only
+				command.set(new Container(new GenericCommand()
 				{
 					@Override
 					public String getAlias()
@@ -185,9 +125,8 @@ public class Main
 							});
 						});
 					}
-				});
-
-				manager.registerCommand(new GenericCommand()
+				}, "admin"));
+				((Container) command.get()).addItem(new GenericCommand()
 				{
 					public String getAttributes()
 					{
@@ -224,19 +163,113 @@ public class Main
 						}.setStreaming(event.args[0], event.args[1]);
 					}
 				});
+				((Container) command.get()).addItem(new StreamingCommand(manager.bot));
+				manager.registerContainer((Container) command.get());
 
+				manager.registerCommand(new _Alias_("current", new GenericCommand()
+				{
+					private Map<String, Boolean> running = new HashMap<>();
+
+					@Override
+					public String getAlias()
+					{
+						return null;
+					}
+
+					@Override
+					public void invoke(CommandEvent event)
+					{
+						MusicPlayer player = (MusicPlayer) event.guild.getAudioManager().getSendingHandler();
+						if (running.containsKey(event.guild.getId()) && running.get(event.guild.getId()))
+						{
+							event.send("Already updating.");
+							return;
+						}
+						final boolean[] isReturned = {true};
+						if (player == null)
+							event.send("Nothing playing.");
+						else
+							event.send(player.getCurrentAudioSource().getInfo().getTitle() + "\n\n" + PlayerUtil.convert(player.getCurrentAudioSource().getInfo().getDuration(), player.getCurrentTimestamp(), player.getVolume()), m -> new Thread(() ->
+							{
+								LOG.debug("Debug: Returned");
+
+								running.put(event.guild.getId(), true);
+								isReturned[0] = m != null;
+								for (int i = 0; i < 5; i++)
+								{
+									try
+									{
+										Thread.sleep(10000); // 10 seconds
+										if (isReturned[0])
+											m.updateMessageAsync(
+													player.getCurrentAudioSource().getInfo().getTitle() + "\n\n" + PlayerUtil.convert(player.getCurrentAudioSource().getInfo().getDuration(), player.getCurrentTimestamp(), player.getVolume())
+													, ms -> isReturned[0] = true);
+										else
+											break;
+									} catch (InterruptedException e)
+									{
+										LOG.log(e);
+									} catch (NullPointerException ignored)
+									{
+									}
+									LOG.debug("Debug: Updated");
+								}
+								LOG.debug("Debug: Finished");
+								running.put(event.guild.getId(), false);
+							}, "Current").start());
+					}
+				}));
+
+				// With Alias
+				command.set(new ListCommands(manager.bot));
+				manager.registerCommand(command.get());
+				manager.registerCommand(new _Alias_("help", command.get(), true));
+
+
+				// Implemented
+				manager.registerCommand(new GenericCommand()
+				{
+					@Override
+					public String getAlias()
+					{
+						return "invite";
+					}
+
+					@Override
+					public void invoke(CommandEvent event)
+					{
+						event.send(String.format("**Invite: %s**",
+								event.api.getSelfInfo().getAuthUrl(
+										Permission.MESSAGE_WRITE,
+										Permission.MESSAGE_READ,
+										Permission.VOICE_CONNECT,
+										Permission.VOICE_SPEAK)));
+					}
+				});
+
+
+				// Custom
 				addCustom(manager.bot, manager);
 
+
+				// Evals
 				try
 				{
-					manager.registerCommand(new EvalCommand(manager.bot));
-					manager.registerCommand(new PythonEval(manager.bot));
-					manager.registerCommand(new CmdCommand(manager.bot));
-					manager.registerCommand(new JavaEval(manager.bot));
+					command.set(new Container(new EvalCommand(manager.bot), "code"));
+					((Container) command.get()).addItem(new PythonEval(manager.bot));
+					((Container) command.get()).addItem(new CmdCommand(manager.bot));
+					((Container) command.get()).addItem(new JavaEval(manager.bot));
+					manager.registerContainer((Container) command.get());
 				} catch (IOException e)
 				{
 					LOG.log(e);
 				}
+
+				// General
+				manager.registerCommand(new PingCommand());
+				manager.registerCommand(new UptimeCommand(manager.getJDA()));
+				manager.registerCommand(new AvatarCommand());
+
 
 				/*manager.getJDA().addEventListener((EventListener) event ->
 				{
@@ -257,6 +290,7 @@ public class Main
 	{
 		if (MusicBot.config.get("custom") != null && MusicBot.config.get("custom") instanceof JSONArray)
 		{
+			Container container = new Container("custom");
 			JSONArray arr = (JSONArray) MusicBot.config.get("custom");
 			arr.forEach(o ->
 			{
@@ -265,7 +299,7 @@ public class Main
 					JSONObject object = (JSONObject) o;
 					if (object.isNull("alias") || object.isNull("response"))
 						throw new NullPointerException("Custom Command invalid: \n" + object.toString(2));
-					manager.registerCommand(new GenericCommand()
+					container.addItem(new GenericCommand()
 					{
 						@Override
 						public String getAlias()
@@ -284,6 +318,8 @@ public class Main
 					LOG.warn(e.toString());
 				}
 			});
+			if (!container.isEmpty())
+				manager.registerContainer(container);
 		}
 	}
 

@@ -5,6 +5,7 @@ import minn.music.managers.CommandManager;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ListCommands extends GenericCommand
 {
@@ -35,7 +36,7 @@ public class ListCommands extends GenericCommand
 
 		CommandManager manager = bot.managers.get(0);
 		commands.addAll(manager.getCommands());
-		commands2.addAll(manager.getNonPrivateCommands());
+		commands2.addAll(manager.getNonPrivateCommands().parallelStream().filter(c -> !(c instanceof _Alias_)).collect(Collectors.toList()));
 
 		if (!event.allArgs.isEmpty())
 		{
@@ -70,14 +71,25 @@ public class ListCommands extends GenericCommand
 		}
 		regular += "```";
 
-		if (!event.isPrivate)
+		if (!event.isPrivate && !commands2.isEmpty())
 		{
 			regular += "\n**Guild only**\n```xml";
 
 			for (GenericCommand c : commands2)
 			{
-				if (c instanceof _Alias_) continue;
 				regular += "\n> " + c.getAlias() + " " + c.getAttributes();
+			}
+			regular += "```";
+		}
+
+		if (!manager.getContainers().isEmpty())
+		{
+			regular += "\n**Categorized**\n```xml";
+			for (Container c : manager.getContainers())
+			{
+				if(!c.isPrivate() && event.isPrivate)
+					continue;
+				regular += "\n> " + c.getAlias();
 			}
 			regular += "```";
 		}

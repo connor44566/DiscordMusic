@@ -1,4 +1,4 @@
-package minn.music.commands.external;
+package minn.music.commands.media;
 
 import minn.music.commands.GenericCommand;
 import minn.music.util.SearchUtil;

@@ -1,27 +1,28 @@
-package minn.music.commands;
+package minn.music.commands.code;
 
 import minn.music.MusicBot;
 import net.dv8tion.jda.utils.SimpleLog;
 
+import java.io.*;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
-public class CmdCommand extends EvalCommand
+public class PythonEval extends EvalCommand
 {
-	private final static SimpleLog LOG = SimpleLog.getLog("CmdCommand");
+	private File f = new File("PewDie.py");
+	private final static SimpleLog LOG = SimpleLog.getLog("PythonEval");
 
-	public CmdCommand(MusicBot bot)
+	public PythonEval(MusicBot bot) throws IOException
 	{
 		super(bot);
+		LOG.setLevel(SimpleLog.Level.DEBUG);
 	}
 
-	@Override
 	public String getAlias()
 	{
-		return "cmd";
+		return "py";
 	}
 
-	@Override
 	public void invoke(CommandEvent event)
 	{
 		if (!event.author.getId().equals(MusicBot.config.owner))
@@ -31,19 +32,17 @@ public class CmdCommand extends EvalCommand
 		}
 		try
 		{
+			// Create Python file
+			f.createNewFile();
+			f.deleteOnExit();
+			OutputStream stream = new BufferedOutputStream(new FileOutputStream(f));
+			stream.write(event.allArgs.getBytes());
+			stream.close();
+
 			// Start process
-			Process p;
-			if (isWin())
-				p = Runtime.getRuntime().exec("cmd /c " + event.allArgs);
-			else if (isUnix())
-				p = Runtime.getRuntime().exec(event.allArgs);
-			else if (isMac())
-				p = Runtime.getRuntime().exec("sh " + event.allArgs);
-			else
-			{
-				LOG.fatal("OS is not registered to use this command. Contact Minn about your OS.");
-				return;
-			}
+			ProcessBuilder builder = new ProcessBuilder();
+			builder.command("python", f.getName());
+			Process p = builder.start();
 
 			// Create Stream Scanner
 			Scanner sc = new Scanner(p.getInputStream());
@@ -68,12 +67,12 @@ public class CmdCommand extends EvalCommand
 						event.send("ERROR: " + read(scErr));
 				} else
 					event.send("✅");
-			}, "CmdEval-Read");
+			}, "PythonEval-Read");
 			t.start();
 
 			// Destroy Process
 			if (p.waitFor(1, TimeUnit.MINUTES))
-				p.destroyForcibly();
+				p.destroy();
 			else
 			{
 				p.destroyForcibly();
@@ -86,24 +85,6 @@ public class CmdCommand extends EvalCommand
 			event.send("Something went wrong trying to eval your query.");
 			LOG.log(e);
 		}
-	}
-
-	private static boolean isWin()
-	{
-		String os = System.getProperty("os.name").toLowerCase();
-		return (os.contains("win"));
-	}
-
-	private static boolean isUnix()
-	{
-		String os = System.getProperty("os.name").toLowerCase();
-		return (os.contains("nix") || os.contains("nux") || os.indexOf("aix") > 0);
-	}
-
-	private static boolean isMac()
-	{
-		String os = System.getProperty("os.name").toLowerCase();
-		return (os.contains("mac"));
 	}
 
 }

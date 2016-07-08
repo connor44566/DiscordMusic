@@ -1,6 +1,7 @@
 package minn.music.managers;
 
 import minn.music.MusicBot;
+import minn.music.commands.Container;
 import minn.music.commands.GenericCommand;
 import minn.music.hooks.CommandListener;
 import net.dv8tion.jda.JDA;
@@ -18,6 +19,7 @@ public class CommandManager
 	private final List<GenericCommand> noPrivateCommands = new LinkedList<>();
 	private final List<GenericCommand> commands = new LinkedList<>();
 	private final List<CommandListener<GenericCommand>> listeners = new LinkedList<>();
+	private final List<Container> containers = new LinkedList<>();
 	public final MusicBot bot;
 	public final static SimpleLog LOG = SimpleLog.getLog("CommandManager");
 
@@ -64,41 +66,66 @@ public class CommandManager
 		final String com = trimmed.split("\\s+", 2)[0];
 		for (GenericCommand c : getCommands())
 		{
-			if (c.getAlias().equalsIgnoreCase(com))
+			if (!c.getAlias().equalsIgnoreCase(com))
+				continue;
+			executor.submit(() -> {
+				try
+				{
+					c.invoke(new GenericCommand.CommandEvent(event));
+				} catch (Exception e)
+				{
+					LOG.log(e);
+				}
+			});
+			for (CommandListener<GenericCommand> listener : getListeners())
+				listener.onCommand(c);
+			return;
+		}
+		for (Container c : getContainers())
+		{
+			if(!c.isPrivate() && event.isPrivate())
+				continue;
+			if(com.equalsIgnoreCase(c.getAlias()))
 			{
-				executor.submit(() -> {
-					try
-					{
-						c.invoke(new GenericCommand.CommandEvent(event));
-					} catch (Exception e)
-					{
-						LOG.log(e);
-					}
-				});
+				new GenericCommand.CommandEvent(event).send(c.getInfo());
 				for (CommandListener<GenericCommand> listener : getListeners())
 					listener.onCommand(c);
 				return;
 			}
+			GenericCommand cmd = c.getCommand(com);
+			if (cmd == null)
+				continue;
+			executor.submit(() ->
+			{
+				try
+				{
+					cmd.invoke(new GenericCommand.CommandEvent(event));
+				} catch (Exception e)
+				{
+					LOG.log(e);
+				}
+			});
+			for (CommandListener<GenericCommand> listener : getListeners())
+				listener.onCommand(cmd);
 		}
 		if (event.isPrivate())
 			return;
 		for (GenericCommand c : getNonPrivateCommands())
 		{
-			if (c.getAlias().equalsIgnoreCase(com))
-			{
-				executor.submit(() -> {
-					try
-					{
-						c.invoke(new GenericCommand.CommandEvent(event));
-					} catch (Exception e)
-					{
-						LOG.log(e);
-					}
-				});
-				for (CommandListener<GenericCommand> listener : getListeners())
-					listener.onCommand(c);
-				return;
-			}
+			if (!c.getAlias().equalsIgnoreCase(com))
+				continue;
+			executor.submit(() -> {
+				try
+				{
+					c.invoke(new GenericCommand.CommandEvent(event));
+				} catch (Exception e)
+				{
+					LOG.log(e);
+				}
+			});
+			for (CommandListener<GenericCommand> listener : getListeners())
+				listener.onCommand(c);
+			return;
 		}
 	}
 
@@ -135,6 +162,16 @@ public class CommandManager
 		return Collections.unmodifiableList(new LinkedList<>(noPrivateCommands));
 	}
 
+	/**
+	 * Provides a thread safe version of {@link CommandManager#containers}
+	 *
+	 * @return Thread Safe Container list.
+	 */
+	public List<Container> getContainers()
+	{
+		return Collections.unmodifiableList(new LinkedList<>(containers));
+	}
+
 	public List<CommandListener<GenericCommand>> getListeners()
 	{
 		return Collections.unmodifiableList(new LinkedList<>(listeners));
@@ -152,15 +189,28 @@ public class CommandManager
 	 */
 	public void registerCommand(GenericCommand command)
 	{
-		if (!(command instanceof GenericCommand))
+		if (!(command instanceof GenericCommand) || command instanceof Container)
 		{
-			LOG.log(new IllegalArgumentException("Command must implement GenericCommand."));
+			LOG.log(new IllegalArgumentException("Command must implement GenericCommand and not Container."));
 			return;
 		}
 		if ((command).isPrivate())
 			commands.add(command);
 		else
 			noPrivateCommands.add(command);
+	}
+
+	/**
+	 * Used to structure command list.
+	 *
+	 * @param container A Not-Null Container.
+	 */
+	public void registerContainer(Container container)
+	{
+		assert container != null && !container.isEmpty();
+		if (containers.contains(container))
+			return;
+		containers.add(container);
 	}
 
 	public static class CommandListenerImpl implements CommandListener<GenericCommand>

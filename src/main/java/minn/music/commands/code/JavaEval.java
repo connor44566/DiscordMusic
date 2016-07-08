@@ -1,4 +1,4 @@
-package minn.music.commands;
+package minn.music.commands.code;
 
 import minn.music.MusicBot;
 import net.dv8tion.jda.utils.SimpleLog;

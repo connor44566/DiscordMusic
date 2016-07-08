@@ -1,5 +1,6 @@
-package minn.music.commands;
+package minn.music.commands.audio;
 
+import minn.music.commands.GenericCommand;
 import net.dv8tion.jda.entities.Message;
 import net.dv8tion.jda.player.MusicPlayer;
 import net.dv8tion.jda.player.Playlist;

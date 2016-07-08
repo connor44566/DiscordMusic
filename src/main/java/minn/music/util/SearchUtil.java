@@ -37,25 +37,25 @@ public class SearchUtil
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	public static String getGif(String... query)
 	{
 		String tags;
 		if (query == null || query.length < 1)
 			tags = "";
 		else if (query.length > 1)
-			tags = String.join(" ", query);
+			tags = URLEncoder.encode(String.join(" ", query));
 		else
-			tags = query[0];
+			tags = URLEncoder.encode(query[0]);
 		try
 		{
-			//noinspection deprecation
-			JSONObject o = Unirest.get("http://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tags=" + URLEncoder.encode(tags)).asJsonAsync().get(1, TimeUnit.SECONDS).getBody().getObject();
+			JSONObject o = Unirest.get("http://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tags=" + tags).asJsonAsync().get(1, TimeUnit.SECONDS).getBody().getObject();
 			if (o.isNull("data"))
 				return "";
 			o = o.getJSONObject("data");
 			if (o.isNull("image_url"))
 				return "";
-			return o.getString("image_url");
+			return (tags.isEmpty() ? "" : "`Query: " + tags + "`\n") + o.getString("image_url");
 		} catch (Exception e)
 		{
 			LOG.log(e);

@@ -1,6 +1,7 @@
-package minn.music.commands;
+package minn.music.commands.code;
 
 import minn.music.MusicBot;
+import minn.music.commands.GenericCommand;
 import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.entities.Message;
 import net.dv8tion.jda.entities.MessageChannel;
