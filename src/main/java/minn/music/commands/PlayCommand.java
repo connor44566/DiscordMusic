@@ -59,11 +59,19 @@ public class PlayCommand extends GenericCommand
 				player.play();
 				event.send("**Started playing...**");
 			} else
-				event.send("I am unable to start playing.");
+				event.send("I am unable to start playing. Provide a URL.");
 			return;
 		}
-
-		Playlist list = Playlist.getPlaylist(url);
+		Playlist list;
+		try
+		{
+			list = Playlist.getPlaylist(url);
+		} catch (NullPointerException e)
+		{
+			event.send("Something went wrong with your request. Please inform a bot dev. (NPE on play)");
+			LOG.log(e);
+			return;
+		}
 		List<AudioSource> sources = list.getSources();
 		final Message[] currentMessage = {null};
 

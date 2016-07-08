@@ -145,6 +145,7 @@ public abstract class GenericCommand
 		{
 			try
 			{
+				message = message.replace(MusicBot.config.token, "<place token here>").replace("@everyone", "@\u0001everyone").replace("@here", "@\u0001here");
 				channel.sendMessageAsync(message, callback);
 			} catch (Exception e)
 			{

@@ -4,7 +4,7 @@ import minn.music.MusicBot;
 import net.dv8tion.jda.utils.SimpleLog;
 
 import java.util.Scanner;
-import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 public class CmdCommand extends EvalCommand
 {
@@ -22,7 +22,7 @@ public class CmdCommand extends EvalCommand
 	}
 
 	@Override
-	public synchronized void invoke(CommandEvent event)
+	public void invoke(CommandEvent event)
 	{
 		if (!event.author.getId().equals(MusicBot.config.owner))
 		{
@@ -48,34 +48,42 @@ public class CmdCommand extends EvalCommand
 			// Create Stream Scanner
 			Scanner sc = new Scanner(p.getInputStream());
 			Scanner scErr = new Scanner(p.getErrorStream());
+			/*ChannelListener listener = new ChannelListener(event.channel, 1, m -> { // input
+				try
+				{
+					p.getOutputStream().write(m.getContent().getBytes());
+				} catch (IOException e)
+				{
+					LOG.log(e);
+				}
+			});*/
 
 			// Read streams
-			if (sc.hasNext())
-				event.send(read(sc));
-			if (scErr.hasNext())
-				event.send("ERROR: " + read(scErr));
-			else
-				event.send("✅");
-
-			// Start KeepAlive
-			timer.schedule(new TimerTask()
-			{
-				@Override
-				public void run()
+			Thread t = new Thread(() -> {
+				if (sc.hasNext() || scErr.hasNext())
 				{
-					if (!p.isAlive())
-						return;
-					p.destroyForcibly();
-					LOG.warn("Process has been terminated. Exceeded time limit.");
-				}
-			}, 3000, 100);
+					if (sc.hasNext())
+						event.send(read(sc));
+					if (scErr.hasNext())
+						event.send("ERROR: " + read(scErr));
+				} else
+					event.send("✅");
+			}, "CmdEval-Read");
+			t.start();
 
 			// Destroy Process
-			p.waitFor();
-			p.destroyForcibly();
+			if (p.waitFor(1, TimeUnit.MINUTES))
+				p.destroyForcibly();
+			else
+			{
+				p.destroyForcibly();
+				LOG.warn("Process has been terminated. Exceeded time limit.");
+			}
+			//listener.shutdown();
 			LOG.debug("Process Destroyed");
 		} catch (Exception e)
 		{
+			event.send("Something went wrong trying to eval your query.");
 			LOG.log(e);
 		}
 	}

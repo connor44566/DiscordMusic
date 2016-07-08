@@ -1,6 +1,7 @@
 package minn.music.util;
 
 import com.mashape.unirest.http.Unirest;
+import net.dv8tion.jda.utils.SimpleLog;
 import org.json.JSONObject;
 
 import java.net.URLEncoder;
@@ -8,6 +9,20 @@ import java.util.concurrent.TimeUnit;
 
 public class SearchUtil
 {
+	public static final SimpleLog LOG = SimpleLog.getLog("SearchUtil");
+
+	public static String getDog()
+	{
+		try
+		{
+			String response = Unirest.get("http://random.dog/woof").asStringAsync().get(1, TimeUnit.MINUTES).getBody();
+			return "http://random.dog/" + response;
+		} catch (Exception e)
+		{
+			LOG.log(e);
+			return "Request Timed Out.";
+		}
+	}
 
 	public static String getCat()
 	{
@@ -17,7 +32,8 @@ public class SearchUtil
 			return response.isEmpty() ? "Something went wrong with the api." : response;
 		} catch (Exception e)
 		{
-			return e.toString();
+			LOG.log(e);
+			return "Request Timed Out.";
 		}
 	}
 
@@ -42,7 +58,8 @@ public class SearchUtil
 			return o.getString("image_url");
 		} catch (Exception e)
 		{
-			return e.toString();
+			LOG.log(e);
+			return "Request Timed Out.";
 		}
 	}
 

@@ -3,6 +3,7 @@ package minn.music;
 import com.mashape.unirest.http.Unirest;
 import minn.music.commands.*;
 import minn.music.commands.external.CatCommand;
+import minn.music.commands.external.DoggoComant;
 import minn.music.commands.external.GifCommand;
 import minn.music.managers.CommandManager;
 import minn.music.settings.Config;
@@ -30,7 +31,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class Main
 {
-	private final static SimpleLog LOG = SimpleLog.getLog("Main");
+	public final static SimpleLog LOG = SimpleLog.getLog("Main");
+	//public final static ReceiveManager rManager = new ReceiveManager();
 
 	public static String getTimestamp()
 	{
@@ -40,6 +42,7 @@ public class Main
 	public static void main(String... a) throws IOException
 	{
 		LOG.info("JDA-Version: " + JDAInfo.VERSION);
+
 		Config cfg = new Config("Base.json", true);
 		int shards = 1;
 		if (cfg.get("shards") != null && cfg.get("shards") instanceof Integer)
@@ -61,10 +64,11 @@ public class Main
 
 				manager.registerCommand(new StreamingCommand(manager.bot));
 				manager.registerCommand(new PlayerCommand(manager.bot));
-				manager.registerCommand(new UptimeCommand());
+				manager.registerCommand(new UptimeCommand(manager.getJDA()));
 				manager.registerCommand(new AvatarCommand());
 				manager.registerCommand(new GifCommand());
 				manager.registerCommand(new CatCommand());
+				manager.registerCommand(new DoggoComant());
 
 				command.set(new ListCommand());
 				manager.registerCommand(command.get());
@@ -91,34 +95,32 @@ public class Main
 						if (player == null)
 							event.send("Nothing playing.");
 						else
-							event.send(player.getCurrentAudioSource().getInfo().getTitle() + "\n\n" + PlayerUtil.convert(player.getCurrentAudioSource().getInfo().getDuration(), player.getCurrentTimestamp(), player.getVolume()), m ->
+							event.send(player.getCurrentAudioSource().getInfo().getTitle() + "\n\n" + PlayerUtil.convert(player.getCurrentAudioSource().getInfo().getDuration(), player.getCurrentTimestamp(), player.getVolume()), m -> new Thread(() ->
 							{
-								new Thread(() -> {
-									LOG.info("Debug: Returned");
+								LOG.debug("Debug: Returned");
 
-									running.put(event.guild.getId(), true);
-									isReturned[0] = m != null;
-									for (int i = 0; i < 5; i++)
+								running.put(event.guild.getId(), true);
+								isReturned[0] = m != null;
+								for (int i = 0; i < 5; i++)
+								{
+									try
 									{
-										try
-										{
-											Thread.sleep(10000);
-											if (isReturned[0])
-												m.updateMessageAsync(
-														player.getCurrentAudioSource().getInfo().getTitle() + "\n\n" + PlayerUtil.convert(player.getCurrentAudioSource().getInfo().getDuration(), player.getCurrentTimestamp(), player.getVolume())
-														, ms -> isReturned[0] = true);
-											else
-												break;
-										} catch (InterruptedException e)
-										{
-											LOG.log(e);
-										}
-										LOG.info("Debug: Updated");
+										Thread.sleep(10000);
+										if (isReturned[0])
+											m.updateMessageAsync(
+													player.getCurrentAudioSource().getInfo().getTitle() + "\n\n" + PlayerUtil.convert(player.getCurrentAudioSource().getInfo().getDuration(), player.getCurrentTimestamp(), player.getVolume())
+													, ms -> isReturned[0] = true);
+										else
+											break;
+									} catch (InterruptedException e)
+									{
+										LOG.log(e);
 									}
-									LOG.info("Debug: Finished");
-									running.put(event.guild.getId(), false);
-								}, "Current").start();
-							});
+									LOG.debug("Debug: Updated");
+								}
+								LOG.debug("Debug: Finished");
+								running.put(event.guild.getId(), false);
+							}, "Current").start());
 					}
 				}, false));
 
@@ -235,6 +237,12 @@ public class Main
 				{
 					LOG.log(e);
 				}
+
+				/*manager.getJDA().addEventListener((EventListener) event ->
+				{
+					if(event instanceof AudioConnectEvent)
+						rManager.registerJDA(((AudioConnectEvent) event).getConnectedChannel().getGuild());
+				});*/
 
 				LOG.info((++i[0]) + " shards ready!");
 			}, shards, cfg);
