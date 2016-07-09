@@ -155,4 +155,9 @@ public abstract class GenericCommand
 
 	}
 
+	public String toString()
+	{
+		return getAlias() + "(" + getAttributes() + ")";
+	}
+
 }

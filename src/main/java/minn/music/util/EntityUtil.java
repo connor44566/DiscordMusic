@@ -12,6 +12,11 @@ import java.util.LinkedList;
 public class EntityUtil
 {
 
+	/**
+	 * Can be used to get {@link net.dv8tion.jda.entities.User User} as Username#Discriminator tag.
+	 * @param user NotNull user instance.
+	 * @return <i>Minn#6688</i> i.e.
+	 */
 	public static String transform(User user)
 	{
 		assert user != null;
