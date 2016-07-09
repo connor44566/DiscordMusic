@@ -4,6 +4,7 @@ import minn.music.MusicBot;
 import minn.music.commands.Container;
 import minn.music.commands.GenericCommand;
 import minn.music.hooks.CommandListener;
+import minn.music.util.EntityUtil;
 import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.hooks.EventListener;
@@ -64,6 +65,8 @@ public class CommandManager
 		String trimmed = event.getMessage().getRawContent().substring(MusicBot.config.prefix.length()).trim();
 		if (trimmed.isEmpty()) return;
 		final String com = trimmed.split("\\s+", 2)[0];
+
+		// General Commands
 		for (GenericCommand c : getCommands())
 		{
 			if (!c.getAlias().equalsIgnoreCase(com))
@@ -71,27 +74,34 @@ public class CommandManager
 			executor.submit(() -> {
 				try
 				{
-					c.invoke(new GenericCommand.CommandEvent(event));
+					GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event);
+					c.invoke(ce);
+					for (CommandListener<GenericCommand> listener : getListeners())
+						listener.onCommand(c, ce);
 				} catch (Exception e)
 				{
 					LOG.log(e);
 				}
 			});
-			for (CommandListener<GenericCommand> listener : getListeners())
-				listener.onCommand(c);
+
 			return;
 		}
+
+		// Containers
 		for (Container c : getContainers())
 		{
 			if(!c.isPrivate() && event.isPrivate())
 				continue;
+			// Info
 			if(com.equalsIgnoreCase(c.getAlias()))
 			{
-				new GenericCommand.CommandEvent(event).send(c.getInfo());
+				GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event);
+				ce.send(c.getInfo());
 				for (CommandListener<GenericCommand> listener : getListeners())
-					listener.onCommand(c);
+					listener.onCommand(c, ce);
 				return;
 			}
+			// Command in Container
 			GenericCommand cmd = c.getCommand(com);
 			if (cmd == null)
 				continue;
@@ -99,15 +109,19 @@ public class CommandManager
 			{
 				try
 				{
-					cmd.invoke(new GenericCommand.CommandEvent(event));
+					GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event);
+					cmd.invoke(ce);
+					for (CommandListener<GenericCommand> listener : getListeners())
+						listener.onCommand(cmd, ce); // Calls listener with cmd
 				} catch (Exception e)
 				{
 					LOG.log(e);
 				}
 			});
-			for (CommandListener<GenericCommand> listener : getListeners())
-				listener.onCommand(cmd);
+			return;
 		}
+
+		// Private
 		if (event.isPrivate())
 			return;
 		for (GenericCommand c : getNonPrivateCommands())
@@ -117,14 +131,15 @@ public class CommandManager
 			executor.submit(() -> {
 				try
 				{
-					c.invoke(new GenericCommand.CommandEvent(event));
+					GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event);
+					c.invoke(ce);
+					for (CommandListener<GenericCommand> listener : getListeners())
+						listener.onCommand(c, ce);
 				} catch (Exception e)
 				{
 					LOG.log(e);
 				}
 			});
-			for (CommandListener<GenericCommand> listener : getListeners())
-				listener.onCommand(c);
 			return;
 		}
 	}
@@ -217,14 +232,33 @@ public class CommandManager
 	{
 		private Map<GenericCommand, Integer> usage = new HashMap<>();
 
+		public Map<GenericCommand, Integer> getUsage()
+		{
+			return Collections.unmodifiableMap(new HashMap<>(usage));
+		}
+
+		public int getUsage(String alias)
+		{
+			final GenericCommand[] c = {null};
+			Map<GenericCommand, Integer> use = getUsage();
+			use.forEach((cmd, i) ->
+			{
+				if(cmd.getAlias().equalsIgnoreCase(alias))
+					c[0] = cmd;
+			});
+			if(c[0] == null)
+				return -1;
+			return use.get(c[0]);
+		}
+
 		@Override
-		public void onCommand(GenericCommand command)
+		public void onCommand(GenericCommand command, GenericCommand.CommandEvent event)
 		{
 			if (usage.containsKey(command))
 				usage.put(command, usage.get(command) + 1);
 			else
 				usage.put(command, 1);
-			LOG.log(SimpleLog.Level.INFO, "Used: " + command.getAlias() + " [" + usage.get(command) + "]");
+			LOG.info(EntityUtil.transform(event.author) + ": " + command.getAlias() + " [" + getUsage(command.getAlias()) + "]");
 		}
 
 	}

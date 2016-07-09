@@ -12,6 +12,12 @@ import java.util.LinkedList;
 public class EntityUtil
 {
 
+	public static String transform(User user)
+	{
+		assert user != null;
+		return user.getUsername() + "#" + user.getDiscriminator();
+	}
+
 	/**
 	 * Resolves {@link net.dv8tion.jda.entities.User User} from given {@link String}.
 	 * <h3>Parsable Strings</h3>

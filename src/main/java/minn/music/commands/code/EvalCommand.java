@@ -66,10 +66,10 @@ public class EvalCommand extends GenericCommand
 			o = e;
 		}
 
-		if (o == null)
+		if (o == null || o.toString().isEmpty())
 			o = "No exceptions.";
 
-		event.send("**__Input:__**\n```js\n" + event.allArgs + "```\n**__Output:__ `" + o.toString() + "`**");
+		event.send("**__Input:__**\n```js\n" + (event.allArgs.isEmpty() ? "-" : event.allArgs) + "```\n**__Output:__ `" + o.toString() + "`**");
 	}
 
 	/**
