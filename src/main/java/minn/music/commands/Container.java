@@ -13,6 +13,7 @@ public class Container extends GenericCommand
 {
 	protected final List<GenericCommand> items = new LinkedList<>();
 	protected final String name;
+	protected boolean isPrivate = false;
 
 	public Container(GenericCommand cmd, String name)
 	{
@@ -24,6 +25,12 @@ public class Container extends GenericCommand
 	{
 		assert name != null && !name.isEmpty();
 		this.name = name;
+	}
+
+	public Container setPrivate(boolean is)
+	{
+		isPrivate = is;
+		return this;
 	}
 
 	public String getAlias()

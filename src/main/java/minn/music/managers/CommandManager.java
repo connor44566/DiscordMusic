@@ -4,9 +4,11 @@ import minn.music.MusicBot;
 import minn.music.commands.Container;
 import minn.music.commands.GenericCommand;
 import minn.music.hooks.CommandListener;
+import minn.music.hooks.MentionListener;
 import minn.music.util.EntityUtil;
 import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.hooks.EventListener;
 import net.dv8tion.jda.utils.SimpleLog;
 
@@ -20,7 +22,9 @@ public class CommandManager
 	private final List<GenericCommand> noPrivateCommands = new LinkedList<>();
 	private final List<GenericCommand> commands = new LinkedList<>();
 	private final List<CommandListener<GenericCommand>> listeners = new LinkedList<>();
+	private final List<MentionListener> mentionListeners = new LinkedList<>();
 	private final List<Container> containers = new LinkedList<>();
+	private static final Map<GenericCommand, Integer> usage = new HashMap<>();
 	public final MusicBot bot;
 	public final static SimpleLog LOG = SimpleLog.getLog("CommandManager");
 
@@ -51,6 +55,14 @@ public class CommandManager
 
 		this.api.addEventListener((EventListener) event ->
 		{
+			if (event instanceof GuildMessageReceivedEvent
+					&& EntityUtil.mentionsMe(((GuildMessageReceivedEvent) event).getMessage()))
+			{
+				for(MentionListener listener : getMentionListeners())
+				{
+					listener.onMention((GuildMessageReceivedEvent) event);
+				}
+			}
 			if (event instanceof MessageReceivedEvent)
 				handleMessage((MessageReceivedEvent) event);
 		});
@@ -187,9 +199,33 @@ public class CommandManager
 		return Collections.unmodifiableList(new LinkedList<>(containers));
 	}
 
+	public List<MentionListener> getMentionListeners()
+	{
+		return Collections.unmodifiableList(new LinkedList<>(mentionListeners));
+	}
+
 	public List<CommandListener<GenericCommand>> getListeners()
 	{
 		return Collections.unmodifiableList(new LinkedList<>(listeners));
+	}
+
+	public static Map<GenericCommand, Integer> getUsage()
+	{
+		return Collections.unmodifiableMap(new HashMap<>(usage));
+	}
+
+	public static int getUsage(String alias)
+	{
+		final GenericCommand[] c = {null};
+		Map<GenericCommand, Integer> use = getUsage();
+		use.forEach((cmd, i) ->
+		{
+			if(cmd.getAlias().equalsIgnoreCase(alias))
+				c[0] = cmd;
+		});
+		if(c[0] == null)
+			return -1;
+		return use.get(c[0]);
 	}
 
 	public JDA getJDA()
@@ -202,7 +238,7 @@ public class CommandManager
 	 *
 	 * @param command GenericCommand.
 	 */
-	public void registerCommand(GenericCommand command)
+	public <V extends GenericCommand> void registerCommand(V command)
 	{
 		if (!(command instanceof GenericCommand) || command instanceof Container)
 		{
@@ -220,7 +256,7 @@ public class CommandManager
 	 *
 	 * @param container A Not-Null Container.
 	 */
-	public void registerContainer(Container container)
+	public <V extends Container> void registerContainer(V container)
 	{
 		assert container != null && !container.isEmpty();
 		if (containers.contains(container))
@@ -228,29 +264,14 @@ public class CommandManager
 		containers.add(container);
 	}
 
+	public <V extends MentionListener> void registerMentionListener(V listener)
+	{
+		assert listener != null;
+		mentionListeners.add(listener);
+	}
+
 	public static class CommandListenerImpl implements CommandListener<GenericCommand>
 	{
-		private Map<GenericCommand, Integer> usage = new HashMap<>();
-
-		public Map<GenericCommand, Integer> getUsage()
-		{
-			return Collections.unmodifiableMap(new HashMap<>(usage));
-		}
-
-		public int getUsage(String alias)
-		{
-			final GenericCommand[] c = {null};
-			Map<GenericCommand, Integer> use = getUsage();
-			use.forEach((cmd, i) ->
-			{
-				if(cmd.getAlias().equalsIgnoreCase(alias))
-					c[0] = cmd;
-			});
-			if(c[0] == null)
-				return -1;
-			return use.get(c[0]);
-		}
-
 		@Override
 		public void onCommand(GenericCommand command, GenericCommand.CommandEvent event)
 		{

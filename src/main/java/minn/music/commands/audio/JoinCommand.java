@@ -2,6 +2,7 @@ package minn.music.commands.audio;
 
 import minn.music.MusicBot;
 import minn.music.commands.GenericCommand;
+import minn.music.util.EntityUtil;
 import net.dv8tion.jda.Permission;
 import net.dv8tion.jda.entities.VoiceChannel;
 
@@ -37,11 +38,10 @@ public class JoinCommand extends GenericCommand
 	{
 		if (event.allArgs.isEmpty())
 		{
-			event.send("Usage: `" + bot.config.prefix + "join <ChannelName>`");
+			event.send("Usage: `" + MusicBot.config.prefix + "join <ChannelName>`");
 			return;
 		}
-		VoiceChannel channel =
-				event.guild.getVoiceChannels().parallelStream().filter(c -> c.getName().equals(event.allArgs)).findFirst().orElse(null);
+		VoiceChannel channel = EntityUtil.getFirstVoice(event.allArgs, event.guild);
 		if (channel == null)
 		{
 			event.send("I can't see a VoiceChannel called **" + event.allArgs + "**.");
@@ -65,5 +65,6 @@ public class JoinCommand extends GenericCommand
 		if (event.guild.getAudioManager().isConnected())
 			event.guild.getAudioManager().moveAudioConnection(channel);
 		else event.guild.getAudioManager().openAudioConnection(channel);
+		event.send("Joined `" + channel.getName() + "`.");
 	}
 }

@@ -14,6 +14,8 @@ import minn.music.commands.code.PythonEval;
 import minn.music.commands.media.CatCommand;
 import minn.music.commands.media.DoggoComant;
 import minn.music.commands.media.GifCommand;
+import minn.music.commands.media.SpamifyCommand;
+import minn.music.hooks.impl.PrefixTeller;
 import minn.music.managers.CommandManager;
 import minn.music.settings.Config;
 import minn.music.util.PlayerUtil;
@@ -66,15 +68,14 @@ public class Main
 				UptimeCommand.start = System.currentTimeMillis();
 				AtomicReference<GenericCommand> command = new AtomicReference<>();
 
+				// Moderation
+				/*command.set(new Container(new BanCommand(), "mod").setPrivate(false)); FIXED IN NEXT JDA VERSION
+				((Container) command.get()).addItem(new SoftbanCommand());
+				((Container) command.get()).addItem(new MuteCommand());
+				manager.registerContainer((Container) command.get());*/
+
 				// Audio
-				command.set(new Container(new PlayCommand(), "audio")
-				{
-					@Override
-					public boolean isPrivate()
-					{
-						return false;
-					}
-				});
+				command.set(new Container(new PlayCommand(), "audio").setPrivate(false));
 				((Container) command.get()).addItem(new JoinCommand(manager.bot));
 				((Container) command.get()).addItem(new PlayerCommand(manager.bot));
 				((Container) command.get()).addItem(new ListCommand());
@@ -84,6 +85,7 @@ public class Main
 				command.set(new Container(new GifCommand(), "media"));
 				((Container) command.get()).addItem(new CatCommand());
 				((Container) command.get()).addItem(new DoggoComant());
+				((Container) command.get()).addItem(new SpamifyCommand());
 				manager.registerContainer((Container) command.get());
 
 				// Admin only
@@ -276,6 +278,8 @@ public class Main
 					if(event instanceof AudioConnectEvent)
 						rManager.registerJDA(((AudioConnectEvent) event).getConnectedChannel().getGuild());
 				});*/
+
+				manager.registerMentionListener(new PrefixTeller());
 
 				LOG.info((++i[0]) + " shards ready!");
 			}, shards, cfg);

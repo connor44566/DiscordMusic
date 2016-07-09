@@ -34,66 +34,92 @@ public class ListCommands extends GenericCommand
 		List<GenericCommand> commands = new LinkedList<>();
 		List<GenericCommand> commands2 = new LinkedList<>();
 
+
 		CommandManager manager = bot.managers.get(0);
 		commands.addAll(manager.getCommands());
 		commands2.addAll(manager.getNonPrivateCommands().parallelStream().filter(c -> !(c instanceof _Alias_)).collect(Collectors.toList()));
+		List<Container> containers = manager.getContainers();
 
 		if (!event.allArgs.isEmpty())
 		{
+			// Parse Regular Commands
 			for (GenericCommand c : commands)
 			{
 				if (c.getAlias().equalsIgnoreCase(event.allArgs))
 				{
-					event.send("Command Info for **" + bot.config.prefix + c.getAlias() + "**: " + c.getInfo());
+					event.send("Command Info for **" + c.getAlias() + "**: " + c.getInfo());
 					return;
 				}
 			}
 
+			// Parse Non-Private Commands
 			for (GenericCommand c : commands2)
 			{
 				if (c.getAlias().equalsIgnoreCase(event.allArgs))
 				{
-					event.send("Command Info for **" + bot.config.prefix + c.getAlias() + "**: " + c.getInfo());
+					event.send("Command Info for **" + c.getAlias() + "**: " + c.getInfo());
 					return;
 				}
 			}
 
+			// Pares Containers
+			for (Container c : containers)
+			{
+				if (c.getAlias().equalsIgnoreCase(event.allArgs))
+				{
+					event.send(c.getInfo());
+					return;
+				}
+
+				// Look for Command
+				GenericCommand cmd = c.getCommand(event.args[0]);
+				if (cmd == null) // Command found?
+					continue;
+				event.send("Command Info for **" + cmd.getAlias() + "**: " + cmd.getInfo());
+				return;
+			}
+
+			// Seems like it doesn't exist.
 			event.send("No command named **" + event.allArgs + "** registered.\n*Call this command without arguments to retrieve a list of commands.*");
 			return;
 		}
 
 
-		String regular = "**Regular Commands**\n```xml";
-		for (GenericCommand c : commands)
+		// No search term given -> list commands
+		String string = "";
+		if (!commands.isEmpty())
 		{
-			if (c instanceof _Alias_) continue;
-			regular += "\n> " + c.getAlias() + " " + c.getAttributes();
+			string = "**Regular Commands**\n```xml";
+			for (GenericCommand c : commands)
+			{
+				if (c instanceof _Alias_) continue;
+				string += "\n> " + c.getAlias() + " " + c.getAttributes();
+			}
+			string += "```";
 		}
-		regular += "```";
-
 		if (!event.isPrivate && !commands2.isEmpty())
 		{
-			regular += "\n**Guild only**\n```xml";
+			string += "\n**Guild only**\n```xml";
 
 			for (GenericCommand c : commands2)
 			{
-				regular += "\n> " + c.getAlias() + " " + c.getAttributes();
+				string += "\n> " + c.getAlias() + " " + c.getAttributes();
 			}
-			regular += "```";
+			string += "```";
 		}
 
 		if (!manager.getContainers().isEmpty())
 		{
-			regular += "\n**Categorized**\n```xml";
+			string += "\n**Categorized**\n```xml";
 			for (Container c : manager.getContainers())
 			{
-				if(!c.isPrivate() && event.isPrivate)
+				if (!c.isPrivate() && event.isPrivate)
 					continue;
-				regular += "\n> " + c.getAlias();
+				string += "\n> " + c.getAlias();
 			}
-			regular += "```";
+			string += "```";
 		}
 
-		event.send(regular);
+		event.send(string);
 	}
 }
