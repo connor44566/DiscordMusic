@@ -1,12 +1,16 @@
 package minn.music.util;
 
 import com.mashape.unirest.http.Unirest;
+import net.dv8tion.jda.player.source.AudioInfo;
+import net.dv8tion.jda.player.source.AudioSource;
+import net.dv8tion.jda.player.source.RemoteSource;
 import net.dv8tion.jda.utils.SimpleLog;
 import org.json.JSONObject;
 
 import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
 
+@SuppressWarnings("ALL")
 public class SearchUtil
 {
 	public static final SimpleLog LOG = SimpleLog.getLog("SearchUtil");
@@ -61,6 +65,54 @@ public class SearchUtil
 			LOG.log(e);
 			return "Request Timed Out.";
 		}
+	}
+
+	public static String searchYoutube(String query)
+	{
+		try
+		{
+			AudioSource source = new RemoteSource("https://www.youtube.com/results?search_query=" + URLEncoder.encode(query));
+			AudioInfo info = source.getInfo();
+			if (info.getError() == null)
+				return info.getOrigin();
+		} catch (Exception e)
+		{
+		}
+		return "Nothing found.";
+	}
+
+	/**
+	 * Same as {@link SearchUtil#searchYoutube(String)} but returns {@link net.dv8tion.jda.player.source.RemoteSource RemoteSource}.
+	 * @param query
+	 * @return
+	 */
+	public static AudioSource getRemoteSource(String query)
+	{
+		try
+		{
+			AudioSource source = new RemoteSource("https://www.youtube.com/results?search_query=" + URLEncoder.encode(query));
+			AudioInfo info = source.getInfo();
+			if (info.getError() == null)
+				return source;
+		} catch (Exception e)
+		{
+		}
+		return null;
+	}
+
+	/**
+	 * Checks whether given String is a valid URL.
+	 * @param url String
+	 * @return True or False
+	 */
+	public static boolean isURL(String url)
+	{
+		return url.matches("^https?://(www\\.)?[^\\s]+\\.[^\\s]+$");
+	}
+
+	public static void main(String... a)
+	{
+		System.out.println(searchYoutube("Test"));
 	}
 
 }

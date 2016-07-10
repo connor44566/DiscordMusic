@@ -53,6 +53,7 @@ public class EntityUtil
 	 * <h3>Parsable Strings</h3>
 	 * <ul>
 	 * <li>Minn#6688</li>
+	 * <li>86699011792191488</li>
 	 * <li><@!86699011792191488></li>
 	 * <li><@86699011792191488></li>
 	 * </ul>
@@ -63,13 +64,34 @@ public class EntityUtil
 	 */
 	public static User resolveUser(String s, JDA api)
 	{
-		if(s.isEmpty())
+		if (s.isEmpty())
 			return null;
-		if(isID(s))
+		if (isID(s))
 			return api.getUserById(s);
 		if (isMention(s))
 			return api.getUserById(s.replaceAll("^<@!?(\\d{16,})>$", "$1"));
 		return getUserByNameDiscriminator(s, api);
+	}
+
+	/**
+	 * Resolves {@link net.dv8tion.jda.entities.TextChannel TextChannel} from given {@link String}.
+	 * <h3>Parsable Strings</h3>
+	 * <ul>
+	 * <li><#191249209553321985></li>
+	 * <li>191249209553321985</li>
+	 * </ul>
+	 *
+	 * @param s   String to parse
+	 * @param api {@link net.dv8tion.jda.JDA JDA} instance to get Channel instance from.
+	 * @return A Channel instance fitting to the unique parsed <i>s</i>. Or null if no channel fits.
+	 */
+	public static TextChannel resolveTextChannel(String s, JDA api)
+	{
+		if (s == null || s.isEmpty())
+			return null;
+		if (isID(s))
+			return api.getTextChannelById(s);
+		return (isChannelMention(s) ? api.getTextChannelById(s.replaceAll("^<#(\\d{16,})>$", "$1")) : null);
 	}
 
 	/**
@@ -148,7 +170,19 @@ public class EntityUtil
 	}
 
 	/**
+	 * Check whether given String is a valid channel mention. (e.g. <#86699011792191488> would return true)
+	 *
+	 * @param mention
+	 * @return boolean
+	 */
+	public static boolean isChannelMention(String mention)
+	{
+		return mention.matches("^<#\\d{16,}>$");
+	}
+
+	/**
 	 * Checks whether the given String is a digit with more than 16 numbers.
+	 *
 	 * @param id String to check.
 	 * @return True if it is a valid id, false otherwise.
 	 */
@@ -159,17 +193,18 @@ public class EntityUtil
 
 	/**
 	 * Convenience function to get a matching {@link net.dv8tion.jda.entities.VoiceChannel VoiceChannel} with the shortest matching name.
+	 *
 	 * @param match Match to look for.
-	 * @param api JDA instance to parse channels of.
+	 * @param api   JDA instance to parse channels of.
 	 * @return VoiceChannel matching given parameter. Or null if none was found.
 	 */
 	public static VoiceChannel getFirstVoice(String match, JDA api)
 	{
 		String lowerCase = match.toLowerCase();
 		return api.getVoiceChannels().parallelStream().filter(c -> c.getName().toLowerCase().contains(lowerCase)).sorted((o1, o2) -> {
-			if(o1.getName().length() < o2.getName().length())
+			if (o1.getName().length() < o2.getName().length())
 				return -1;
-			if(o1.getName().length() > o2.getName().length())
+			if (o1.getName().length() > o2.getName().length())
 				return 1;
 			return 0;
 		}).findFirst().orElse(null);
@@ -177,17 +212,18 @@ public class EntityUtil
 
 	/**
 	 * Convenience function to get a matching {@link net.dv8tion.jda.entities.TextChannel TextChannel} with the shortest matching name.
+	 *
 	 * @param match Match to look for.
-	 * @param api JDA instance to parse channels of.
+	 * @param api   JDA instance to parse channels of.
 	 * @return TextChannel matching given parameter. Or null if none was found.
 	 */
 	public static TextChannel getFirstText(String match, JDA api)
 	{
 		String lowerCase = match.toLowerCase();
 		return api.getTextChannels().parallelStream().filter(c -> c.getName().toLowerCase().contains(lowerCase)).sorted((o1, o2) -> {
-			if(o1.getName().length() < o2.getName().length())
+			if (o1.getName().length() < o2.getName().length())
 				return -1;
-			if(o1.getName().length() > o2.getName().length())
+			if (o1.getName().length() > o2.getName().length())
 				return 1;
 			return 0;
 		}).findFirst().orElse(null);
@@ -195,6 +231,7 @@ public class EntityUtil
 
 	/**
 	 * Convenience function to get a matching {@link net.dv8tion.jda.entities.VoiceChannel VoiceChannel} with the shortest matching name.
+	 *
 	 * @param match Match to look for.
 	 * @param guild Guild instance to parse channels of.
 	 * @return VoiceChannel matching given parameter. Or null if none was found.
@@ -203,9 +240,9 @@ public class EntityUtil
 	{
 		String lowerCase = match.toLowerCase();
 		return guild.getVoiceChannels().parallelStream().filter(c -> c.getName().toLowerCase().contains(lowerCase)).sorted((o1, o2) -> {
-			if(o1.getName().length() < o2.getName().length())
+			if (o1.getName().length() < o2.getName().length())
 				return -1;
-			if(o1.getName().length() > o2.getName().length())
+			if (o1.getName().length() > o2.getName().length())
 				return 1;
 			return 0;
 		}).findFirst().orElse(null);
@@ -213,6 +250,7 @@ public class EntityUtil
 
 	/**
 	 * Convenience function to get a matching {@link net.dv8tion.jda.entities.TextChannel TextChannel} with the shortest matching name.
+	 *
 	 * @param match Match to look for.
 	 * @param guild Guild instance to parse channels of.
 	 * @return TextChannel matching given parameter. Or null if none was found.
@@ -221,9 +259,9 @@ public class EntityUtil
 	{
 		String lowerCase = match.toLowerCase();
 		return guild.getTextChannels().parallelStream().filter(c -> c.getName().toLowerCase().contains(lowerCase)).sorted((o1, o2) -> {
-			if(o1.getName().length() < o2.getName().length())
+			if (o1.getName().length() < o2.getName().length())
 				return -1;
-			if(o1.getName().length() > o2.getName().length())
+			if (o1.getName().length() > o2.getName().length())
 				return 1;
 			return 0;
 		}).findFirst().orElse(null);
@@ -231,17 +269,18 @@ public class EntityUtil
 
 	/**
 	 * Convenience function to retrieve {@link Guild Guild} with the shortest matching guild contained in given shard.
+	 *
 	 * @param match String to look for in Guild names. (Ignores casing)
-	 * @param api JDA instance(shard)
+	 * @param api   JDA instance(shard)
 	 * @return Guild with shortest matching name or null.
 	 */
 	public static Guild getFirstGuild(String match, JDA api)
 	{
 		String lowerCase = match.toLowerCase();
 		return api.getGuilds().parallelStream().filter(g -> g.getName().toLowerCase().contains(lowerCase)).sorted((o1, o2) -> {
-			if(o1.getName().length() < o2.getName().length())
+			if (o1.getName().length() < o2.getName().length())
 				return -1;
-			if(o1.getName().length() > o2.getName().length())
+			if (o1.getName().length() > o2.getName().length())
 				return 1;
 			return 0;
 		}).findFirst().orElse(null);

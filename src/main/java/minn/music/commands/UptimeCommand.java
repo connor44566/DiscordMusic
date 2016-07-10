@@ -9,13 +9,14 @@ public class UptimeCommand extends GenericCommand
 {
 
 	public static long start;
+	private long instantiated = start; // If shard -> shard restart overriding instance time
 
 	public UptimeCommand(JDA api)
 	{
 		api.addEventListener((EventListener) event ->
 		{
 			if(event instanceof ReconnectedEvent)
-				start = System.currentTimeMillis();
+				instantiated = System.currentTimeMillis();
 		});
 	}
 
@@ -28,6 +29,6 @@ public class UptimeCommand extends GenericCommand
 	@Override
 	public void invoke(CommandEvent event)
 	{
-		event.send(TimeUtil.uptime(System.currentTimeMillis() - start));
+		event.send(TimeUtil.uptime(System.currentTimeMillis() - instantiated));
 	}
 }

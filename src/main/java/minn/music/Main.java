@@ -2,22 +2,23 @@ package minn.music;
 
 import com.mashape.unirest.http.Unirest;
 import minn.music.commands.*;
+import minn.music.commands.admin.DetermineShards;
+import minn.music.commands.admin.DetermineUsage;
+import minn.music.commands.admin.IgnoreCommand;
 import minn.music.commands.admin.StreamingCommand;
-import minn.music.commands.audio.JoinCommand;
-import minn.music.commands.audio.ListCommand;
-import minn.music.commands.audio.PlayCommand;
-import minn.music.commands.audio.PlayerCommand;
+import minn.music.commands.audio.*;
 import minn.music.commands.code.CmdCommand;
 import minn.music.commands.code.EvalCommand;
 import minn.music.commands.code.JavaEval;
 import minn.music.commands.code.PythonEval;
-import minn.music.commands.media.CatCommand;
-import minn.music.commands.media.DoggoComant;
-import minn.music.commands.media.GifCommand;
-import minn.music.commands.media.SpamifyCommand;
+import minn.music.commands.media.*;
+import minn.music.commands.mod.BanCommand;
+import minn.music.commands.mod.MuteCommand;
+import minn.music.commands.mod.SoftbanCommand;
 import minn.music.hooks.impl.PrefixTeller;
 import minn.music.managers.CommandManager;
 import minn.music.settings.Config;
+import minn.music.util.IgnoreUtil;
 import minn.music.util.PlayerUtil;
 import net.dv8tion.jda.JDAInfo;
 import net.dv8tion.jda.Permission;
@@ -26,6 +27,8 @@ import net.dv8tion.jda.entities.impl.GameImpl;
 import net.dv8tion.jda.entities.impl.JDAImpl;
 import net.dv8tion.jda.entities.impl.SelfInfoImpl;
 import net.dv8tion.jda.events.ShutdownEvent;
+import net.dv8tion.jda.events.guild.GuildJoinEvent;
+import net.dv8tion.jda.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.hooks.EventListener;
 import net.dv8tion.jda.managers.AccountManager;
 import net.dv8tion.jda.player.MusicPlayer;
@@ -53,7 +56,6 @@ public class Main
 	public static void main(String... a) throws IOException
 	{
 		LOG.info("JDA-Version: " + JDAInfo.VERSION);
-
 		Config cfg = new Config("Base.json", true);
 		int shards = 1;
 		if (cfg.get("shards") != null && cfg.get("shards") instanceof Integer)
@@ -69,10 +71,10 @@ public class Main
 				AtomicReference<GenericCommand> command = new AtomicReference<>();
 
 				// Moderation
-				/*command.set(new Container(new BanCommand(), "mod").setPrivate(false)); FIXED IN NEXT JDA VERSION
+				command.set(new Container(new BanCommand(), "mod").setPrivate(false));
 				((Container) command.get()).addItem(new SoftbanCommand());
 				((Container) command.get()).addItem(new MuteCommand());
-				manager.registerContainer((Container) command.get());*/
+				manager.registerContainer((Container) command.get());
 
 				// Audio
 				command.set(new Container(new PlayCommand(), "audio").setPrivate(false));
@@ -86,7 +88,10 @@ public class Main
 				((Container) command.get()).addItem(new CatCommand());
 				((Container) command.get()).addItem(new DoggoComant());
 				((Container) command.get()).addItem(new SpamifyCommand());
+				((Container) command.get()).addItem(new TagCommand(manager.bot));
+				((Container) command.get()).addItem(new SearchCommand());
 				manager.registerContainer((Container) command.get());
+				manager.registerCommand(new _Alias_("t", ((Container) command.get()).getCommand("tag"), false));
 
 				// Admin only
 				command.set(new Container(new GenericCommand()
@@ -166,6 +171,9 @@ public class Main
 					}
 				});
 				((Container) command.get()).addItem(new StreamingCommand(manager.bot));
+				((Container) command.get()).addItem(new DetermineShards(manager.bot.managers));
+				((Container) command.get()).addItem(new DetermineUsage());
+				((Container) command.get()).addItem(new IgnoreCommand());
 				manager.registerContainer((Container) command.get());
 
 				manager.registerCommand(new _Alias_("current", new GenericCommand()
@@ -280,9 +288,17 @@ public class Main
 				});*/
 
 				manager.registerMentionListener(new PrefixTeller());
+				manager.getJDA().addEventListener((EventListener) event ->
+				{
+					if (event instanceof GuildJoinEvent)
+						SimpleLog.getLog("Guild").info("Joined " + ((GuildJoinEvent) event).getGuild().getName());
+					else if (event instanceof GuildLeaveEvent)
+						SimpleLog.getLog("Guild").info("Left " + ((GuildLeaveEvent) event).getGuild().getName());
+				});
 
 				LOG.info((++i[0]) + " shards ready!");
 			}, shards, cfg);
+			IgnoreUtil.init();
 		} catch (Exception e)
 		{
 			LOG.fatal(e);

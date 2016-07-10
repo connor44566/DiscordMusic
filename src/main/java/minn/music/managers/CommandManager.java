@@ -6,6 +6,7 @@ import minn.music.commands.GenericCommand;
 import minn.music.hooks.CommandListener;
 import minn.music.hooks.MentionListener;
 import minn.music.util.EntityUtil;
+import minn.music.util.IgnoreUtil;
 import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.events.message.guild.GuildMessageReceivedEvent;
@@ -24,7 +25,7 @@ public class CommandManager
 	private final List<CommandListener<GenericCommand>> listeners = new LinkedList<>();
 	private final List<MentionListener> mentionListeners = new LinkedList<>();
 	private final List<Container> containers = new LinkedList<>();
-	private static final Map<GenericCommand, Integer> usage = new HashMap<>();
+	private static final Map<String, Integer> usage = new HashMap<>();
 	public final MusicBot bot;
 	public final static SimpleLog LOG = SimpleLog.getLog("CommandManager");
 
@@ -67,12 +68,11 @@ public class CommandManager
 				handleMessage((MessageReceivedEvent) event);
 		});
 
-		listeners.add(new CommandListenerImpl());
 	}
 
 	private void handleMessage(MessageReceivedEvent event)
 	{
-		if (!event.getMessage().getRawContent().startsWith(MusicBot.config.prefix) || event.getAuthor() == event.getJDA().getSelfInfo())
+		if (!event.getMessage().getRawContent().startsWith(MusicBot.config.prefix) || event.getAuthor() == event.getJDA().getSelfInfo() || IgnoreUtil.isIgnored(event.getTextChannel()))
 			return;
 		String trimmed = event.getMessage().getRawContent().substring(MusicBot.config.prefix.length()).trim();
 		if (trimmed.isEmpty()) return;
@@ -90,6 +90,7 @@ public class CommandManager
 					c.invoke(ce);
 					for (CommandListener<GenericCommand> listener : getListeners())
 						listener.onCommand(c, ce);
+					onCommand(c, ce); // static synced listener
 				} catch (Exception e)
 				{
 					LOG.log(e);
@@ -111,6 +112,7 @@ public class CommandManager
 				ce.send(c.getInfo());
 				for (CommandListener<GenericCommand> listener : getListeners())
 					listener.onCommand(c, ce);
+				onCommand(c, ce); // static synced listener
 				return;
 			}
 			// Command in Container
@@ -125,6 +127,7 @@ public class CommandManager
 					cmd.invoke(ce);
 					for (CommandListener<GenericCommand> listener : getListeners())
 						listener.onCommand(cmd, ce); // Calls listener with cmd
+					onCommand(cmd, ce); // static synced listener
 				} catch (Exception e)
 				{
 					LOG.log(e);
@@ -147,6 +150,7 @@ public class CommandManager
 					c.invoke(ce);
 					for (CommandListener<GenericCommand> listener : getListeners())
 						listener.onCommand(c, ce);
+					onCommand(c, ce); // static synced listener
 				} catch (Exception e)
 				{
 					LOG.log(e);
@@ -209,18 +213,18 @@ public class CommandManager
 		return Collections.unmodifiableList(new LinkedList<>(listeners));
 	}
 
-	public static Map<GenericCommand, Integer> getUsage()
+	public static Map<String, Integer> getUsage()
 	{
 		return Collections.unmodifiableMap(new HashMap<>(usage));
 	}
 
 	public static int getUsage(String alias)
 	{
-		final GenericCommand[] c = {null};
-		Map<GenericCommand, Integer> use = getUsage();
+		final String[] c = {null};
+		Map<String, Integer> use = getUsage();
 		use.forEach((cmd, i) ->
 		{
-			if(cmd.getAlias().equalsIgnoreCase(alias))
+			if(cmd.equalsIgnoreCase(alias))
 				c[0] = cmd;
 		});
 		if(c[0] == null)
@@ -270,18 +274,13 @@ public class CommandManager
 		mentionListeners.add(listener);
 	}
 
-	public static class CommandListenerImpl implements CommandListener<GenericCommand>
+	private static synchronized void onCommand(GenericCommand command, GenericCommand.CommandEvent event)
 	{
-		@Override
-		public void onCommand(GenericCommand command, GenericCommand.CommandEvent event)
-		{
-			if (usage.containsKey(command))
-				usage.put(command, usage.get(command) + 1);
-			else
-				usage.put(command, 1);
-			LOG.info(EntityUtil.transform(event.author) + ": " + command.getAlias() + " [" + getUsage(command.getAlias()) + "]");
-		}
-
+		if (usage.containsKey(command.getAlias()))
+			usage.put(command.getAlias(), usage.get(command.getAlias()) + 1);
+		else
+			usage.put(command.getAlias(), 1);
+		LOG.info(EntityUtil.transform(event.author) + ": " + command.getAlias() + " [" + getUsage(command.getAlias()) + "]");
 	}
 
 }
