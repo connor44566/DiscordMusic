@@ -147,12 +147,13 @@ public abstract class GenericCommand
 			try
 			{
 				message = message.replace(MusicBot.config.token, "<place token here>").replace("@everyone", "@\u0001everyone").replace("@here", "@\u0001here"); // no mass mentions or token
-				channel.sendMessageAsync(message, msg -> new Thread(() -> {
-					if (callback != null) callback.accept(msg);
-				}, "Async Callback Accept").start()); // async
+				channel.sendMessageAsync(message, msg -> {
+					if (callback != null) new Thread(() -> callback.accept(msg), "Async Callback Accept").start();
+				}); // async
 			} catch (Exception e)
 			{
 				LOG.warn("A message was not sent due to " + e.getClass().getSimpleName() + ": " + e.getMessage());
+				if (callback != null) new Thread(() -> callback.accept(null), "Async Callback Accept").start();
 			}
 		}
 

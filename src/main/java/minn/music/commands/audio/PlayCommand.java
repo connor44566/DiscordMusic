@@ -133,7 +133,7 @@ public class PlayCommand extends GenericCommand
 					} else
 					{
 						error++;
-						LOG.warn("Encountered error: " + info.getError());
+						LOG.debug("Encountered error: " + info.getError());
 					}
 				}
 				if (msg[0] == null)

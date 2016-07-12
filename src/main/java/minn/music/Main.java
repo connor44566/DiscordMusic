@@ -1,6 +1,7 @@
 package minn.music;
 
 import com.mashape.unirest.http.Unirest;
+import minn.music.audio.send.QueueManager;
 import minn.music.commands.*;
 import minn.music.commands.admin.DetermineShards;
 import minn.music.commands.admin.DetermineUsage;
@@ -12,9 +13,7 @@ import minn.music.commands.code.EvalCommand;
 import minn.music.commands.code.JavaEval;
 import minn.music.commands.code.PythonEval;
 import minn.music.commands.media.*;
-import minn.music.commands.mod.BanCommand;
-import minn.music.commands.mod.MuteCommand;
-import minn.music.commands.mod.SoftbanCommand;
+import minn.music.commands.mod.*;
 import minn.music.commands.settings.PrefixCommand;
 import minn.music.hooks.impl.PrefixTeller;
 import minn.music.managers.CommandManager;
@@ -77,6 +76,8 @@ public class Main
 				command.set(new Container(new BanCommand(), "mod").setPrivate(false));
 				((Container) command.get()).addItem(new SoftbanCommand());
 				((Container) command.get()).addItem(new MuteCommand());
+				((Container) command.get()).addItem(new ClearCommand());
+				((Container) command.get()).addItem(new FlushCommand());
 				manager.registerContainer((Container) command.get());
 
 				// Audio
@@ -128,9 +129,11 @@ public class Main
 										{
 											LOG.log(e);
 										}
+										QueueManager.save();
 										System.exit(1);
 									}
 								});
+								QueueManager.save(m.getJDA());
 								m.getJDA().shutdown();
 							});
 						});
@@ -262,7 +265,7 @@ public class Main
 
 
 				// Custom
-				addCustom(manager.bot, manager);
+				addCustom(manager);
 
 
 
@@ -300,7 +303,7 @@ public class Main
 					else if (event instanceof GuildLeaveEvent)
 						SimpleLog.getLog("Guild").info("Left " + ((GuildLeaveEvent) event).getGuild().getName());
 				});
-
+				QueueManager.resume(manager.getJDA());
 				LOG.info((++i[0]) + " shards ready!");
 			}, shards, cfg);
 			IgnoreUtil.init();
@@ -311,7 +314,7 @@ public class Main
 		}
 	}
 
-	public static void addCustom(MusicBot bot, CommandManager manager)
+	public static void addCustom(CommandManager manager)
 	{
 		if (MusicBot.config.get("custom") != null && MusicBot.config.get("custom") instanceof JSONArray)
 		{
