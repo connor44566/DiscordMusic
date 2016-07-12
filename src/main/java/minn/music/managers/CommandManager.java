@@ -75,8 +75,8 @@ public class CommandManager
 		if ((!event.getMessage().getRawContent().startsWith(MusicBot.config.prefix)
 				&& (event.getGuild() != null
 				&& !event.getMessage().getRawContent().startsWith(PrefixManager.getPrefix(event.getGuild())))) // If Guild -> has custom prefix?
-				|| event.getAuthor() == event.getJDA().getSelfInfo()
-				|| IgnoreUtil.isIgnored(event.getTextChannel()))
+				|| IgnoreUtil.isIgnored(event.getTextChannel())
+				|| event.getAuthor().isBot())
 			return;
 		String trimmed = null;
 		if (!PrefixManager.isCustom(event.getMessage(), event.getGuild()))

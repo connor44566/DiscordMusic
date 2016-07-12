@@ -3,6 +3,7 @@ package minn.music.commands.mod;
 import minn.music.commands.GenericCommand;
 import minn.music.util.EntityUtil;
 import net.dv8tion.jda.Permission;
+import net.dv8tion.jda.entities.PermissionOverride;
 import net.dv8tion.jda.entities.TextChannel;
 import net.dv8tion.jda.entities.User;
 import net.dv8tion.jda.utils.PermissionUtil;
@@ -50,7 +51,8 @@ public class MuteCommand extends GenericCommand
 			event.send("I need permission to manage channel permissions.");
 			return;
 		}
-		((TextChannel) event.channel).getOverrideForUser(user).getManager().deny(Permission.MESSAGE_WRITE).update();
+		PermissionOverride override = ((TextChannel) event.channel).getOverrideForUser(user);
+		(override != null ? override.getManager() : ((TextChannel) event.channel).createPermissionOverride(user)).deny(Permission.MESSAGE_WRITE).update();
 		event.send("*Muted " + EntityUtil.transform(user) + "*\nTo un-mute a user go to channel's permissions and grant the user to send messages in the channel.");
 	}
 }
