@@ -59,7 +59,7 @@ public class CommandManager
 			if (event instanceof GuildMessageReceivedEvent
 					&& EntityUtil.mentionsMe(((GuildMessageReceivedEvent) event).getMessage()))
 			{
-				for(MentionListener listener : getMentionListeners())
+				for (MentionListener listener : getMentionListeners())
 				{
 					listener.onMention((GuildMessageReceivedEvent) event);
 				}
@@ -72,9 +72,17 @@ public class CommandManager
 
 	private void handleMessage(MessageReceivedEvent event)
 	{
-		if (!event.getMessage().getRawContent().startsWith(MusicBot.config.prefix) || event.getAuthor() == event.getJDA().getSelfInfo() || IgnoreUtil.isIgnored(event.getTextChannel()))
+		if ((!event.getMessage().getRawContent().startsWith(MusicBot.config.prefix)
+				&& (event.getGuild() != null
+				&& !event.getMessage().getRawContent().startsWith(PrefixManager.getPrefix(event.getGuild())))) // If Guild -> has custom prefix?
+				|| event.getAuthor() == event.getJDA().getSelfInfo()
+				|| IgnoreUtil.isIgnored(event.getTextChannel()))
 			return;
-		String trimmed = event.getMessage().getRawContent().substring(MusicBot.config.prefix.length()).trim();
+		String trimmed = null;
+		if (!PrefixManager.isCustom(event.getMessage(), event.getGuild()))
+			trimmed = event.getMessage().getRawContent().substring(MusicBot.config.prefix.length()).trim();
+		else
+			trimmed = event.getMessage().getRawContent().substring(PrefixManager.getPrefix(event.getGuild()).length()).trim();
 		if (trimmed.isEmpty()) return;
 		final String com = trimmed.split("\\s+", 2)[0];
 
@@ -83,10 +91,11 @@ public class CommandManager
 		{
 			if (!c.getAlias().equalsIgnoreCase(com))
 				continue;
+			String finalTrimmed = trimmed;
 			executor.submit(() -> {
 				try
 				{
-					GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event);
+					GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event, finalTrimmed);
 					c.invoke(ce);
 					for (CommandListener<GenericCommand> listener : getListeners())
 						listener.onCommand(c, ce);
@@ -103,12 +112,12 @@ public class CommandManager
 		// Containers
 		for (Container c : getContainers())
 		{
-			if(!c.isPrivate() && event.isPrivate())
+			if (!c.isPrivate() && event.isPrivate())
 				continue;
 			// Info
-			if(com.equalsIgnoreCase(c.getAlias()))
+			if (com.equalsIgnoreCase(c.getAlias()))
 			{
-				GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event);
+				GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event, trimmed);
 				ce.send(c.getInfo());
 				for (CommandListener<GenericCommand> listener : getListeners())
 					listener.onCommand(c, ce);
@@ -119,11 +128,12 @@ public class CommandManager
 			GenericCommand cmd = c.getCommand(com);
 			if (cmd == null)
 				continue;
+			String finalTrimmed1 = trimmed;
 			executor.submit(() ->
 			{
 				try
 				{
-					GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event);
+					GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event, finalTrimmed1);
 					cmd.invoke(ce);
 					for (CommandListener<GenericCommand> listener : getListeners())
 						listener.onCommand(cmd, ce); // Calls listener with cmd
@@ -143,10 +153,11 @@ public class CommandManager
 		{
 			if (!c.getAlias().equalsIgnoreCase(com))
 				continue;
+			String finalTrimmed2 = trimmed;
 			executor.submit(() -> {
 				try
 				{
-					GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event);
+					GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event, finalTrimmed2);
 					c.invoke(ce);
 					for (CommandListener<GenericCommand> listener : getListeners())
 						listener.onCommand(c, ce);
@@ -224,10 +235,10 @@ public class CommandManager
 		Map<String, Integer> use = getUsage();
 		use.forEach((cmd, i) ->
 		{
-			if(cmd.equalsIgnoreCase(alias))
+			if (cmd.equalsIgnoreCase(alias))
 				c[0] = cmd;
 		});
-		if(c[0] == null)
+		if (c[0] == null)
 			return -1;
 		return use.get(c[0]);
 	}
@@ -244,7 +255,7 @@ public class CommandManager
 	 */
 	public <V extends GenericCommand> void registerCommand(V command)
 	{
-		if (!(command instanceof GenericCommand) || command instanceof Container)
+		if (command == null || command instanceof Container)
 		{
 			LOG.log(new IllegalArgumentException("Command must implement GenericCommand and not Container."));
 			return;

@@ -28,7 +28,7 @@ public class StreamingCommand extends GenericCommand
 	@Override
 	public void invoke(CommandEvent event)
 	{
-		if (!event.author.getId().equals(bot.config.owner))
+		if (!event.author.getId().equals(MusicBot.config.owner))
 		{
 			event.send("You are not allowed to modify this property.");
 			return;
@@ -36,15 +36,19 @@ public class StreamingCommand extends GenericCommand
 		String twitch = " ";
 		try
 		{
-			twitch = (String) bot.config.get("twitch");
+			twitch = (String) MusicBot.config.get("twitch");
 			if (twitch == null || twitch.isEmpty())
 				twitch = " ";
 		} catch (ClassCastException ignored)
 		{
 		}
-		if (event.allArgs.isEmpty())
-			event.api.getAccountManager().setGame(null);
-		else
-			event.api.getAccountManager().setStreaming(event.allArgs, "https://twitch.tv/" + twitch);
+		String finalTwitch = twitch;
+		bot.managers.parallelStream().forEach(m ->
+		{
+			if (event.allArgs.isEmpty())
+				m.getJDA().getAccountManager().setGame(null);
+			else
+				m.getJDA().getAccountManager().setStreaming(event.allArgs, "https://twitch.tv/" + finalTwitch);
+		});
 	}
 }

@@ -14,9 +14,8 @@ public class PersistenceUtil
 	{
 		assert name != null && !name.isEmpty() && object != null;
 		ensureDir();
-		try
+		try (ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(BASE_URI + name))))
 		{
-			ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(BASE_URI + name)));
 			out.writeObject(object);
 			out.close();
 		} catch (IOException e)
@@ -29,9 +28,8 @@ public class PersistenceUtil
 	{
 		assert name != null && !name.isEmpty();
 		ensureDir();
-		try
+		try (ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(new FileInputStream(BASE_URI + name))))
 		{
-			ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(new FileInputStream(BASE_URI + name)));
 			Object object = in.readObject();
 			in.close();
 			return object;

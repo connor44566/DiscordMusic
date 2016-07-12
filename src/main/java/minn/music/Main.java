@@ -15,8 +15,10 @@ import minn.music.commands.media.*;
 import minn.music.commands.mod.BanCommand;
 import minn.music.commands.mod.MuteCommand;
 import minn.music.commands.mod.SoftbanCommand;
+import minn.music.commands.settings.PrefixCommand;
 import minn.music.hooks.impl.PrefixTeller;
 import minn.music.managers.CommandManager;
+import minn.music.managers.PrefixManager;
 import minn.music.settings.Config;
 import minn.music.util.IgnoreUtil;
 import minn.music.util.PlayerUtil;
@@ -56,6 +58,7 @@ public class Main
 	public static void main(String... a) throws IOException
 	{
 		LOG.info("JDA-Version: " + JDAInfo.VERSION);
+		PrefixManager.init();
 		Config cfg = new Config("Base.json", true);
 		int shards = 1;
 		if (cfg.get("shards") != null && cfg.get("shards") instanceof Integer)
@@ -262,6 +265,7 @@ public class Main
 				addCustom(manager.bot, manager);
 
 
+
 				// Evals
 				try
 				{
@@ -279,6 +283,7 @@ public class Main
 				manager.registerCommand(new PingCommand());
 				manager.registerCommand(new UptimeCommand(manager.getJDA()));
 				manager.registerCommand(new AvatarCommand());
+				manager.registerCommand(new PrefixCommand());
 
 
 				/*manager.getJDA().addEventListener((EventListener) event ->

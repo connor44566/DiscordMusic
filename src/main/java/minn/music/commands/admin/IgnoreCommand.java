@@ -26,7 +26,7 @@ public class IgnoreCommand extends GenericCommand
 	}
 
 	@Override
-	public void invoke(CommandEvent event)
+	public void invoke(CommandEvent event) // TODO: Testing
 	{
 		if (!event.author.getId().equals(MusicBot.config.owner))
 		{

@@ -34,6 +34,7 @@ public abstract class GenericCommand
 
 	/**
 	 * Used to get info about the command.
+	 *
 	 * @return Info
 	 */
 	public String getInfo()
@@ -43,12 +44,14 @@ public abstract class GenericCommand
 
 	/**
 	 * Must be implemented by sub-class.
+	 *
 	 * @param event A CommandEvent implementation.
 	 */
 	public abstract void invoke(CommandEvent event);
 
 	/**
 	 * Attributes this command requires.
+	 *
 	 * @return String
 	 */
 	public String getAttributes()
@@ -86,7 +89,7 @@ public abstract class GenericCommand
 		public final String[] args;
 
 
-		public CommandEvent(MessageReceivedEvent event)
+		public CommandEvent(MessageReceivedEvent event, String trimmed)
 		{
 			channel = event.getChannel();
 			guild = event.getGuild();
@@ -95,10 +98,9 @@ public abstract class GenericCommand
 			message = event.getMessage();
 			isPrivate = event.isPrivate();
 
-			String trimmed = event.getMessage().getRawContent().substring(MusicBot.config.prefix.length()).trim();
 			String[] parts = trimmed.split("\\s+", 2);
 
-			if(parts.length > 1)
+			if (parts.length > 1)
 			{
 				this.allArgs = parts[1];
 				this.args = allArgs.split("\\s+");
@@ -111,7 +113,7 @@ public abstract class GenericCommand
 			messageEvent = event;
 		}
 
-		public CommandEvent(GuildMessageReceivedEvent event)
+		public CommandEvent(GuildMessageReceivedEvent event, String trimmed)
 		{
 			channel = event.getChannel();
 			guild = event.getGuild();
@@ -120,10 +122,9 @@ public abstract class GenericCommand
 			message = event.getMessage();
 			isPrivate = false;
 
-			String trimmed = event.getMessage().getRawContent().substring(MusicBot.config.prefix.length()).trim();
 			String[] parts = trimmed.split("\\s+", 2);
 
-			if(parts.length > 1)
+			if (parts.length > 1)
 			{
 				this.allArgs = parts[1];
 				this.args = allArgs.split("\\s+");
@@ -145,8 +146,10 @@ public abstract class GenericCommand
 		{
 			try
 			{
-				message = message.replace(MusicBot.config.token, "<place token here>").replace("@everyone", "@\u0001everyone").replace("@here", "@\u0001here");
-				channel.sendMessageAsync(message, callback);
+				message = message.replace(MusicBot.config.token, "<place token here>").replace("@everyone", "@\u0001everyone").replace("@here", "@\u0001here"); // no mass mentions or token
+				channel.sendMessageAsync(message, msg -> new Thread(() -> {
+					if (callback != null) callback.accept(msg);
+				}, "Async Callback Accept").start()); // async
 			} catch (Exception e)
 			{
 				LOG.warn("A message was not sent due to " + e.getClass().getSimpleName() + ": " + e.getMessage());
