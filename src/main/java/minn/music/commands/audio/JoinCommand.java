@@ -49,7 +49,7 @@ public class JoinCommand extends GenericCommand
 		}
 		if (event.guild.getAudioManager().isAttemptingToConnect())
 		{
-			event.send("I am currently trying to connect to **" + event.guild.getAudioManager().getQueuedAudioConnection() + "**.");
+			event.send("I am currently trying to connect to **" + event.guild.getAudioManager().getQueuedAudioConnection().getName() + "**.");
 			return;
 		}
 		if (!channel.checkPermission(event.api.getSelfInfo(), Permission.VOICE_CONNECT))

@@ -1,8 +1,13 @@
 package minn.music.util;
 
+import com.mashape.unirest.http.Unirest;
 import net.dv8tion.jda.utils.SimpleLog;
+import org.json.JSONException;
 
 import java.io.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class PersistenceUtil
 {
@@ -14,8 +19,12 @@ public class PersistenceUtil
 	{
 		assert name != null && !name.isEmpty() && object != null;
 		ensureDir();
-		try (ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(BASE_URI + name))))
+		try
 		{
+			File f = new File(BASE_URI + name);
+			if (f.exists()) // To make sure it's clean
+				f.delete();
+			ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(BASE_URI + name)));
 			out.writeObject(object);
 			out.close();
 		} catch (IOException e)
@@ -40,10 +49,26 @@ public class PersistenceUtil
 		}
 	}
 
+	public static String hastebin(String input) throws InterruptedException, ExecutionException, TimeoutException, JSONException
+	{
+		return "http://hastebin.com/" + Unirest.post("http://hastebin.com/documents").body(input).asJsonAsync().get(3, TimeUnit.SECONDS).getBody().getObject().getString("key");
+	}
+
 	private static void ensureDir()
 	{
 		File dir = new File(BASE_URI);
 		dir.mkdirs();
+	}
+
+	public static void main(String... a)
+	{
+		try
+		{
+			System.out.println(hastebin("Test"));
+		} catch (InterruptedException | ExecutionException | TimeoutException e)
+		{
+			e.printStackTrace();
+		}
 	}
 
 }

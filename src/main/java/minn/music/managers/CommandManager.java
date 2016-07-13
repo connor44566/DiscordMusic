@@ -78,7 +78,7 @@ public class CommandManager
 				|| IgnoreUtil.isIgnored(event.getTextChannel())
 				|| event.getAuthor().isBot())
 			return;
-		String trimmed = null;
+		String trimmed;
 		if (!PrefixManager.isCustom(event.getMessage(), event.getGuild()))
 			trimmed = event.getMessage().getRawContent().substring(MusicBot.config.prefix.length()).trim();
 		else

@@ -62,7 +62,7 @@ public class QueueManager
 							AudioInfo info = source.getInfo();
 							if (info.getError() != null)
 								SimpleLog.getLog("QueueManager").debug("ERROR " + info.getError());
-							return source.getInfo().getError() == null;
+							return !info.isLive() && source.getInfo().getError() == null;
 						}).forEach(source ->
 						{
 							player.getAudioQueue().add(source);

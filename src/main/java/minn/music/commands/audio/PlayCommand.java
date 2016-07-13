@@ -85,6 +85,17 @@ public class PlayCommand extends GenericCommand
 						AudioSource source = SearchUtil.getRemoteSource(url);
 						if (source != null)
 						{
+							AudioInfo info = source.getInfo();
+							if (info.getError() != null)
+							{
+								event.send("I can't queue that.");
+								return;
+							}
+							if (info.isLive())
+							{
+								event.send("I'm not playing livestreams.");
+								return;
+							}
 							finalPlayer.getAudioQueue().add(source);
 							String s = String.format("Added **%s**", source.getInfo().getTitle());
 							if (!finalPlayer.isPlaying())

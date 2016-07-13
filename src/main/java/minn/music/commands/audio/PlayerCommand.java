@@ -4,6 +4,7 @@ import minn.music.MusicBot;
 import minn.music.commands.GenericCommand;
 import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.player.MusicPlayer;
+import net.dv8tion.jda.player.source.AudioSource;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -29,7 +30,7 @@ public class PlayerCommand extends GenericCommand
 			try
 			{
 				MusicPlayer player = (MusicPlayer) guild.getAudioManager().getSendingHandler();
-				if(player == null)
+				if (player == null)
 				{
 					throw new ClassCastException("Player is not available.");
 				}
@@ -74,14 +75,17 @@ public class PlayerCommand extends GenericCommand
 					throw new NullPointerException("No queued songs.");
 				}
 
-				try {
+				try
+				{
 					int amount = Integer.parseInt(input);
-					int i;
-					for(i = 0; i < amount && !(player.getAudioQueue().isEmpty() && player.getCurrentAudioSource() == null); i++)
+					int i = 0;
+					for (i = 0; i < amount - 1 && i < player.getAudioQueue().size() - 1; i++)
 					{
-						player.skipToNext();
+						player.getAudioQueue().remove();
 					}
-					throw new NullPointerException("Skipped " + i + " song"+ ((i == 1) ? "" : "s") + ".");
+					i++;
+					player.skipToNext();
+					throw new NullPointerException("Skipped " + i + " song" + ((i == 1) ? "" : "s") + ".");
 				} catch (NumberFormatException e)
 				{
 					player.skipToNext();
@@ -102,6 +106,28 @@ public class PlayerCommand extends GenericCommand
 			} else
 				throw new IllegalArgumentException("I'm not currently connected.");
 		}));
+
+		properties.add(new PlayerProperty("remove", (input, guild) ->
+		{
+			MusicPlayer player = (MusicPlayer) guild.getAudioManager().getSendingHandler();
+			if (player == null)
+				throw new NullPointerException("Your player has no queue songs.");
+			try
+			{
+				if (input.isEmpty())
+					throw new NumberFormatException();
+				int index = Integer.parseInt(input) - 1;
+				if (index >= player.getAudioQueue().size() || index < 0)
+					throw new IndexOutOfBoundsException("Index is not listed.");
+				AudioSource source = player.getAudioQueue().get(index);
+				player.getAudioQueue().remove(index);
+				throw new NullPointerException("Removed **" + source.getInfo().getTitle() + "** from the queue.");
+			} catch (NumberFormatException e)
+			{
+				throw new NumberFormatException("Invalid input. Usage: `remove <index>`.\nExample: `remove 5`");
+			}
+
+		}));
 	}
 
 	public String getInfo()
@@ -111,7 +137,7 @@ public class PlayerCommand extends GenericCommand
 		{
 			s += "\n> " + p.name;
 		}
-		return(s + "```");
+		return (s + "```");
 	}
 
 	public String getAttributes()
@@ -145,7 +171,7 @@ public class PlayerCommand extends GenericCommand
 			if (p.name.equalsIgnoreCase(event.args[0]))
 			{
 				String response = p.invoke((parts.length == 2) ? parts[1] : "", event.guild);
-				if(response != null && !response.isEmpty())
+				if (response != null && !response.isEmpty())
 					event.send(response);
 				return;
 			}
