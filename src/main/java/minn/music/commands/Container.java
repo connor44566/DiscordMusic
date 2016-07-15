@@ -14,6 +14,7 @@ public class Container extends GenericCommand
 	protected final List<GenericCommand> items = new LinkedList<>();
 	protected final String name;
 	protected boolean isPrivate = false;
+	protected boolean isAdmin = false;
 
 	public Container(GenericCommand cmd, String name)
 	{
@@ -21,6 +22,7 @@ public class Container extends GenericCommand
 		items.add(cmd);
 		this.name = name;
 	}
+
 	public Container(String name)
 	{
 		assert name != null && !name.isEmpty();
@@ -30,6 +32,12 @@ public class Container extends GenericCommand
 	public Container setPrivate(boolean is)
 	{
 		isPrivate = is;
+		return this;
+	}
+
+	public Container setAdmin(boolean is)
+	{
+		isAdmin = is;
 		return this;
 	}
 
@@ -79,5 +87,10 @@ public class Container extends GenericCommand
 	public boolean isEmpty()
 	{
 		return items.isEmpty();
+	}
+
+	public boolean isAdmin()
+	{
+		return isAdmin;
 	}
 }

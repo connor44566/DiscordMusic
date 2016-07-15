@@ -84,6 +84,11 @@ public class Main
 				command.set(new Container(new PlayCommand(), "audio").setPrivate(false));
 				((Container) command.get()).addItem(new JoinCommand(manager.bot));
 				((Container) command.get()).addItem(new PlayerCommand(manager.bot));
+				((Container) command.get()).addItem(new SkipCommand());
+				((Container) command.get()).addItem(new RemoveSongCommand());
+				((Container) command.get()).addItem(new AudioLeaveCommand());
+				((Container) command.get()).addItem(new PlayerVolumeCommand());
+				((Container) command.get()).addItem(new PlayerShuffleCommand());
 				((Container) command.get()).addItem(new ListCommand());
 				manager.registerContainer((Container) command.get());
 
@@ -138,7 +143,7 @@ public class Main
 							});
 						});
 					}
-				}, "admin"));
+				}, "admin").setAdmin(true));
 				((Container) command.get()).addItem(new GenericCommand()
 				{
 					public String getAttributes()

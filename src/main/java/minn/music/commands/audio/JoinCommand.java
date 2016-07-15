@@ -36,12 +36,13 @@ public class JoinCommand extends GenericCommand
 	@Override
 	public void invoke(CommandEvent event)
 	{
-		if (event.allArgs.isEmpty())
+		VoiceChannel channel = EntityUtil.getVoiceForUser(event.author, event.guild);
+		if (event.allArgs.isEmpty() && channel == null)
 		{
 			event.send("Usage: `" + MusicBot.config.prefix + "join <ChannelName>`");
 			return;
-		}
-		VoiceChannel channel = EntityUtil.getFirstVoice(event.allArgs, event.guild);
+		} else
+			channel = EntityUtil.getFirstVoice(event.allArgs, event.guild);
 		if (channel == null)
 		{
 			event.send("I can't see a VoiceChannel called **" + event.allArgs + "**.");

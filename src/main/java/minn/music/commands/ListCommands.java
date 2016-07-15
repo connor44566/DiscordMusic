@@ -62,7 +62,7 @@ public class ListCommands extends GenericCommand
 				}
 			}
 
-			// Pares Containers
+			// Parse Containers
 			for (Container c : containers)
 			{
 				if (c.getAlias().equalsIgnoreCase(event.allArgs))
@@ -113,7 +113,7 @@ public class ListCommands extends GenericCommand
 			string += "\n**Categorized**\n```xml";
 			for (Container c : manager.getContainers())
 			{
-				if (!c.isPrivate() && event.isPrivate)
+				if ((!c.isPrivate() && event.isPrivate) || (c.isAdmin && !event.author.getId().equals(MusicBot.config.owner)))
 					continue;
 				string += "\n> " + c.getAlias();
 			}

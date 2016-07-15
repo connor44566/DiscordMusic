@@ -67,9 +67,14 @@ public class PlayCommand extends GenericCommand
 				event.send("I am unable to start playing. Provide a URL.");
 			return;
 		}
+
+		if (url.matches("<.+>"))
+			url = url.replaceAll("^<(.*)>$", "$1");
+
 		final Playlist[] list = new Playlist[1];
 		MusicPlayer finalPlayer = player;
 		final Message[] msg = new Message[]{null};
+		String finalUrl = url;
 		event.send("Fetching...", m ->
 		{
 			new Thread(() ->
@@ -77,12 +82,12 @@ public class PlayCommand extends GenericCommand
 				msg[0] = m;
 				try
 				{
-					list[0] = Playlist.getPlaylist(url);
+					list[0] = Playlist.getPlaylist(finalUrl);
 				} catch (NullPointerException e)
 				{
-					if (!SearchUtil.isURL(url)) // Not a URL? Look it up.
+					if (!SearchUtil.isURL(finalUrl)) // Not a URL? Look it up.
 					{
-						AudioSource source = SearchUtil.getRemoteSource(url);
+						AudioSource source = SearchUtil.getRemoteSource(finalUrl);
 						if (source != null)
 						{
 							AudioInfo info = source.getInfo();

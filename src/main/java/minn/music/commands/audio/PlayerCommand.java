@@ -3,10 +3,7 @@ package minn.music.commands.audio;
 import minn.music.MusicBot;
 import minn.music.commands.GenericCommand;
 import net.dv8tion.jda.entities.Guild;
-import net.dv8tion.jda.player.MusicPlayer;
-import net.dv8tion.jda.player.source.AudioSource;
 
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -27,106 +24,27 @@ public class PlayerCommand extends GenericCommand
 
 		properties.add(new PlayerProperty("shuffle", (input, guild) ->
 		{
-			try
-			{
-				MusicPlayer player = (MusicPlayer) guild.getAudioManager().getSendingHandler();
-				if (player == null)
-				{
-					throw new ClassCastException("Player is not available.");
-				}
-				Collections.shuffle(player.getAudioQueue());
-				throw new NullPointerException("Queue has been shuffled.");
-			} catch (ClassCastException e)
-			{
-				throw new ClassCastException("Player is not available.");
-			}
+			throw new UnsupportedOperationException("Please use `shuffle` instead.");
 		}));
 
 		properties.add(new PlayerProperty("volume", (input, guild) ->
 		{
-			try
-			{
-				float vol = Float.parseFloat(input);
-				MusicPlayer player = (MusicPlayer) guild.getAudioManager().getSendingHandler();
-				if (player == null)
-				{
-					player = new MusicPlayer();
-					guild.getAudioManager().setSendingHandler(player);
-				}
-				vol = Math.min(Math.max(0, vol), 1); // Ensure 0 - 1
-				player.setVolume(vol);
-				throw new NullPointerException("**Volume: " + vol + "**");
-			} catch (NumberFormatException e)
-			{
-				throw new NullPointerException("Invalid input. Example vol 0.5");
-			} catch (ClassCastException e)
-			{
-				throw new ClassCastException("Player is not available.");
-			}
+			throw new UnsupportedOperationException("Please use `volume [float]` instead.");
 		}));
 
 		properties.add(new PlayerProperty("skip", (input, guild) ->
 		{
-			try
-			{
-				MusicPlayer player = (MusicPlayer) guild.getAudioManager().getSendingHandler();
-				if (player == null)
-				{
-					throw new NullPointerException("No queued songs.");
-				}
-
-				try
-				{
-					int amount = Integer.parseInt(input);
-					int i = 0;
-					for (i = 0; i < amount - 1 && i < player.getAudioQueue().size() - 1; i++)
-					{
-						player.getAudioQueue().remove();
-					}
-					i++;
-					player.skipToNext();
-					throw new NullPointerException("Skipped " + i + " song" + ((i == 1) ? "" : "s") + ".");
-				} catch (NumberFormatException e)
-				{
-					player.skipToNext();
-					throw new NullPointerException("Skipped current song.");
-				}
-			} catch (ClassCastException e)
-			{
-				throw new ClassCastException("Player is not available.");
-			}
+			throw new UnsupportedOperationException("Please use `skip [amount]` instead.");
 		}));
 
 		properties.add(new PlayerProperty("leave", (input, guild) ->
 		{
-			if (guild.getAudioManager().isConnected())
-			{
-				guild.getAudioManager().closeAudioConnection();
-				throw new NullPointerException("Disconnected.");
-			} else
-				throw new IllegalArgumentException("I'm not currently connected.");
+			throw new UnsupportedOperationException("Please use `dc` instead.");
 		}));
 
 		properties.add(new PlayerProperty("remove", (input, guild) ->
 		{
-			MusicPlayer player = (MusicPlayer) guild.getAudioManager().getSendingHandler();
-			if (player == null)
-				throw new NullPointerException("Your player has no queue songs.");
-			try
-			{
-				if (input.isEmpty())
-					throw new NumberFormatException();
-				int index = Integer.parseInt(input) - 1;
-				if (index >= player.getAudioQueue().size() || index < 0)
-					throw new IndexOutOfBoundsException("Index is not listed.");
-				AudioSource source = player.getAudioQueue().get(index);
-				player.getAudioQueue().remove(index);
-				throw new NullPointerException("Removed **" + source.getInfo().getTitle() + "** from the queue.");
-			} catch (NumberFormatException e)
-			{
-				throw new NumberFormatException("Invalid input. Usage: `remove <index>`.\nExample: `remove 5`");
-			}
-
+			throw new UnsupportedOperationException("Please use `songremove <index>` instead.");
 		}));
 	}
 

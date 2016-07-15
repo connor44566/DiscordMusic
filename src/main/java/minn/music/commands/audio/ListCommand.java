@@ -32,49 +32,53 @@ public class ListCommand extends GenericCommand
 	@Override
 	public void invoke(CommandEvent event)
 	{
-		MusicPlayer player = null;
-		long total = 0L;
-		try
+		event.send("Fetching...", m ->
 		{
-			player = (MusicPlayer) event.guild.getAudioManager().getSendingHandler();
-		} catch (ClassCastException ignored)
-		{
-		}
-		if (player == null)
-		{
-			event.send("No queued songs.");
-			return;
-		}
-		if (player.getCurrentAudioSource() == null && player.getAudioQueue().isEmpty())
-		{
-			event.send("No queued songs.");
-			return;
-		}
-		String response = "__Current:__ " +
-				"`[" + player.getCurrentTimestamp().getTimestamp() + "/" + player.getCurrentAudioSource().getInfo().getDuration().getTimestamp() + "]` ** " +
-				player.getCurrentAudioSource().getInfo().getTitle().replaceAll("[*]{2}", "\\*\\*") + "**";
-
-		total += player.getCurrentAudioSource().getInfo().getDuration().getTotalSeconds() - player.getCurrentTimestamp().getTotalSeconds();
-
-		if (!player.getAudioQueue().isEmpty())
-		{
-			response += "\n__Queue: **" + player.getAudioQueue().size() + "** entries.__\n";
-			String document = response;
-			for (int i = 0; i < player.getAudioQueue().size(); i++)
+			if (m == null)
+				return;
+			MusicPlayer player = null;
+			long total = 0L;
+			try
 			{
-				AudioInfo info = player.getAudioQueue().get(i).getInfo();
-				if (i < 5)
-					response += "\n**" + (i + 1) + ")** `[" + info.getDuration().getTimestamp() + "]` " + info.getTitle().replaceAll("[*]{2}", "\\*\\*");
-				total += info.getDuration().getTotalSeconds();
-			}
-			if (player.getAudioQueue().size() >= 5)
+				player = (MusicPlayer) event.guild.getAudioManager().getSendingHandler();
+			} catch (ClassCastException ignored)
 			{
-				response += "\n...";
 			}
-		}
-		response += "\n\nFull list at: " + getDocument(player, event.guild) + "\n" + TimeUtil.time(total) + " left.";
+			if (player == null)
+			{
+				m.updateMessageAsync("No queued songs.", null);
+				return;
+			}
+			if (player.getCurrentAudioSource() == null && player.getAudioQueue().isEmpty())
+			{
+				m.updateMessageAsync("No queued songs.", null);
+				return;
+			}
+			String response = "__Current:__ " +
+					"`[" + player.getCurrentTimestamp().getTimestamp() + "/" + player.getCurrentAudioSource().getInfo().getDuration().getTimestamp() + "]` ** " +
+					player.getCurrentAudioSource().getInfo().getTitle().replaceAll("[*]{2}", "\\*\\*") + "**";
 
-		event.send(response);
+			total += player.getCurrentAudioSource().getInfo().getDuration().getTotalSeconds() - player.getCurrentTimestamp().getTotalSeconds();
+
+			if (!player.getAudioQueue().isEmpty())
+			{
+				response += "\n__Queue: **" + player.getAudioQueue().size() + "** entries.__\n";
+				for (int i = 0; i < player.getAudioQueue().size(); i++)
+				{
+					AudioInfo info = player.getAudioQueue().get(i).getInfo();
+					if (i < 5)
+						response += "\n**" + (i + 1) + ")** `[" + info.getDuration().getTimestamp() + "]` " + info.getTitle().replaceAll("[*]{2}", "\\*\\*");
+					total += info.getDuration().getTotalSeconds();
+				}
+				if (player.getAudioQueue().size() > 5)
+				{
+					response += "\n...";
+				}
+			}
+			response += "\n" + (player.getAudioQueue().size() > 5 ? "\nFull list at: " + getDocument(player, event.guild) : "") + "\n" + TimeUtil.time(total) + " left.";
+
+			m.updateMessageAsync(response, null);
+		});
 	}
 
 	private String getDocument(MusicPlayer player, Guild guild)
@@ -90,11 +94,12 @@ public class ListCommand extends GenericCommand
 			content += "\nCurrent song: " + curr.getInfo().getTitle() + " [" + player.getCurrentTimestamp().getTimestamp()  +"/" + curr.getInfo().getDuration().getTimestamp() + "]";
 		if (!queue.isEmpty())
 		{
+			int spaces = ("" + queue.size()).length();
 			content += "\n\n\nQueue:\n";
 			int i = 0;
 			for (AudioSource s : new LinkedList<>(queue))
 			{
-				content += "[" + ++i + "] [" + s.getInfo().getDuration().getTimestamp() + "] " + s.getInfo().getTitle() + "\n";
+				content += "[" + adjust(++i, spaces) + "] [" + s.getInfo().getDuration().getTimestamp() + "] " + s.getInfo().getTitle() + "\n";
 			}
 		}
 
@@ -105,6 +110,16 @@ public class ListCommand extends GenericCommand
 		{
 			return "*document unavailable*";
 		}
+	}
+
+	private String adjust(int index, int amount)
+	{
+		String s = "" + index;
+		while (s.length() < amount)
+		{
+			s = " " + s;
+		}
+		return s;
 	}
 
 

@@ -29,7 +29,8 @@ public class CommandManager
 	public final MusicBot bot;
 	public final static SimpleLog LOG = SimpleLog.getLog("CommandManager");
 
-	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 10, 5, TimeUnit.MINUTES, new LinkedBlockingQueue<>(), r -> {
+	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 10, 5, TimeUnit.MINUTES, new LinkedBlockingQueue<>(), r ->
+	{
 		final Thread t = new Thread(r, "CommandExecutorThread");
 		t.setDaemon(true);
 		t.setPriority(5);
@@ -67,7 +68,6 @@ public class CommandManager
 			if (event instanceof MessageReceivedEvent)
 				handleMessage((MessageReceivedEvent) event);
 		});
-
 	}
 
 	private void handleMessage(MessageReceivedEvent event)
@@ -92,7 +92,8 @@ public class CommandManager
 			if (!c.getAlias().equalsIgnoreCase(com))
 				continue;
 			String finalTrimmed = trimmed;
-			executor.submit(() -> {
+			executor.submit(() ->
+			{
 				try
 				{
 					GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event, finalTrimmed);
@@ -154,7 +155,8 @@ public class CommandManager
 			if (!c.getAlias().equalsIgnoreCase(com))
 				continue;
 			String finalTrimmed2 = trimmed;
-			executor.submit(() -> {
+			executor.submit(() ->
+			{
 				try
 				{
 					GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event, finalTrimmed2);

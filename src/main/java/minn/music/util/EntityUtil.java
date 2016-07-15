@@ -191,6 +191,19 @@ public class EntityUtil
 		return id.matches("^\\d{16,}$");
 	}
 
+
+	/**
+	 * Retrieves the VoiceChannel for given User of given Guild instance.
+	 * @param user User instance
+	 * @param guild Guild instance
+	 * @return VoiceChannel of user or null.
+	 */
+	public static VoiceChannel getVoiceForUser(User user, Guild guild)
+	{
+		assert guild != null && user != null;
+		return guild.getVoiceStatusOfUser(user).getChannel();
+	}
+
 	/**
 	 * Convenience function to get a matching {@link net.dv8tion.jda.entities.VoiceChannel VoiceChannel} with the shortest matching name.
 	 *
