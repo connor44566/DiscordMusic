@@ -182,7 +182,7 @@ public class Main
 					}
 				});
 				((Container) command.get()).addItem(new StreamingCommand(manager.bot));
-				((Container) command.get()).addItem(new DetermineShards(manager.bot.managers));
+				((Container) command.get()).addItem(new DetermineShards(manager.bot));
 				((Container) command.get()).addItem(new DetermineUsage());
 				((Container) command.get()).addItem(new IgnoreCommand());
 				manager.registerContainer((Container) command.get());

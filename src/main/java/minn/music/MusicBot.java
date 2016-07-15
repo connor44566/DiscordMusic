@@ -2,14 +2,14 @@ package minn.music;
 
 import minn.music.managers.CommandManager;
 import minn.music.settings.Config;
+import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.JDABuilder;
 import net.dv8tion.jda.events.Event;
 import net.dv8tion.jda.events.ReadyEvent;
 import net.dv8tion.jda.hooks.EventListener;
 import net.dv8tion.jda.utils.SimpleLog;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class MusicBot implements EventListener
@@ -17,6 +17,7 @@ public class MusicBot implements EventListener
 	public static Config config;
 	private final static SimpleLog LOG = SimpleLog.getLog("MusicBot");
 	public final List<CommandManager> managers = new LinkedList<>();
+	private final Map<Integer, JDA> shards = new HashMap<>();
 	private Consumer<CommandManager> callback;
 
 	public void onEvent(Event event)
@@ -39,30 +40,35 @@ public class MusicBot implements EventListener
 			this.callback = callback;
 			if(shards == 1)
 			{
-				new JDABuilder()
+				this.shards.put(0, new JDABuilder()
 						.setAudioEnabled(true)
 						.setAutoReconnect(true)
 						.setBotToken(config.token)
 						.setBulkDeleteSplittingEnabled(false)
 						.addListener(this)
-						.buildAsync();
+						.buildAsync());
 				return;
 			}
 			for (int i = 0; i < shards; i++)
 			{
-				new JDABuilder()
+				this.shards.put(i, new JDABuilder()
 						.setAudioEnabled(true)
 						.setAutoReconnect(true)
 						.setBotToken(config.token)
 						.setBulkDeleteSplittingEnabled(false)
 						.addListener(this)
 						.useSharding(i, shards)
-						.buildAsync();
+						.buildAsync());
 			}
 		} catch (Exception e)
 		{
 			LOG.log(e);
 			System.exit(1);
 		}
+	}
+
+	public Map<Integer, JDA> getShards()
+	{
+		return Collections.unmodifiableMap(shards);
 	}
 }

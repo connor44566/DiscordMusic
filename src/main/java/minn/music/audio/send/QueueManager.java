@@ -22,7 +22,7 @@ public class QueueManager
 
 	public static void resume(JDA api)
 	{
-		ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 10, 5, TimeUnit.MINUTES, new LinkedBlockingQueue<>(), r ->
+		ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 50, 5, TimeUnit.MINUTES, new LinkedBlockingQueue<>(), r ->
 		{
 			Thread t = new Thread(r, "Resuming Playlist");
 			t.setDaemon(true);
@@ -52,13 +52,20 @@ public class QueueManager
 				Guild g = c.getGuild();
 				MusicPlayer player = new MusicPlayer();
 				g.getAudioManager().setSendingHandler(player);
-				g.getAudioManager().openAudioConnection(c);
+				try
+				{
+					g.getAudioManager().openAudioConnection(c);
+				} catch (Exception e)
+				{
+					SimpleLog.getLog("QueueManager").warn(e);
+				}
 				list.parallelStream().forEach(s ->
 				{
 					try
 					{
 						Playlist playlist = Playlist.getPlaylist(s);
-						playlist.getSources().stream().filter(source -> {
+						playlist.getSources().stream().filter(source ->
+						{
 							AudioInfo info = source.getInfo();
 							if (info.getError() != null)
 								SimpleLog.getLog("QueueManager").debug("ERROR " + info.getError());
