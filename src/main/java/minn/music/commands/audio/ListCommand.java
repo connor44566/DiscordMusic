@@ -12,8 +12,6 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 public class ListCommand extends GenericCommand
 {
@@ -106,7 +104,7 @@ public class ListCommand extends GenericCommand
 		try
 		{
 			return PersistenceUtil.hastebin(content) + ".dos";
-		} catch (InterruptedException | ExecutionException | TimeoutException e)
+		} catch (Exception e)
 		{
 			return "*document unavailable*";
 		}

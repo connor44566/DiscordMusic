@@ -6,7 +6,6 @@ import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.entities.VoiceChannel;
 import net.dv8tion.jda.player.MusicPlayer;
 import net.dv8tion.jda.player.Playlist;
-import net.dv8tion.jda.player.source.AudioInfo;
 import net.dv8tion.jda.utils.SimpleLog;
 
 import java.util.HashMap;
@@ -19,10 +18,11 @@ public class QueueManager
 {
 
 	private static HashMap<String, LinkedList<String>> queueCache = new HashMap<>();
+	private static final SimpleLog LOG = SimpleLog.getLog("QueueManager");
 
 	public static void resume(JDA api)
 	{
-		ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 50, 5, TimeUnit.MINUTES, new LinkedBlockingQueue<>(), r ->
+		ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 15, 2, TimeUnit.MINUTES, new LinkedBlockingQueue<>(), r ->
 		{
 			Thread t = new Thread(r, "Resuming Playlist");
 			t.setDaemon(true);
@@ -39,16 +39,15 @@ public class QueueManager
 		}
 		queueCache.forEach((id, list) ->
 		{
-			SimpleLog.getLog("QueueManager").debug("Resuming: " + id + list.toString());
 			VoiceChannel c = api.getVoiceChannelById(id);
 			if (c == null)
 			{
-				SimpleLog.getLog("QueueManager").debug("Channel is null.");
+				LOG.debug("Channel is null.");
 				return;
 			}
 			executor.submit(() ->
 			{
-				SimpleLog.getLog("QueueManager").debug("Thread started!");
+				LOG.info("Resuming: " + id);
 				Guild g = c.getGuild();
 				MusicPlayer player = new MusicPlayer();
 				g.getAudioManager().setSendingHandler(player);
@@ -57,20 +56,20 @@ public class QueueManager
 					g.getAudioManager().openAudioConnection(c);
 				} catch (Exception e)
 				{
-					SimpleLog.getLog("QueueManager").warn(e);
+					LOG.warn(e);
 				}
 				list.parallelStream().forEach(s ->
 				{
 					try
 					{
 						Playlist playlist = Playlist.getPlaylist(s);
-						playlist.getSources().stream().filter(source ->
+						playlist.getSources()/*.stream().filter(source ->
 						{
 							AudioInfo info = source.getInfo();
 							if (info.getError() != null)
 								SimpleLog.getLog("QueueManager").debug("ERROR " + info.getError());
 							return !info.isLive() && source.getInfo().getError() == null;
-						}).forEach(source ->
+						})*/.forEach(source ->
 						{
 							player.getAudioQueue().add(source);
 							if (!player.isPlaying())
@@ -78,10 +77,10 @@ public class QueueManager
 						});
 					} catch (Exception e)
 					{
-						SimpleLog.getLog("QueueManager").debug(e);
+						LOG.debug(e);
 					}
 				});
-				SimpleLog.getLog("QueueManager").debug("Resumed: " + c.toString() + " " + player.getAudioQueue().toString());
+				LOG.info("Resumed: " + c.toString());
 			});
 		});
 	}

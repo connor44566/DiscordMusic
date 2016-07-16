@@ -14,13 +14,16 @@ import minn.music.commands.code.JavaEval;
 import minn.music.commands.code.PythonEval;
 import minn.music.commands.media.*;
 import minn.music.commands.mod.*;
+import minn.music.commands.settings.NickCommand;
 import minn.music.commands.settings.PrefixCommand;
+import minn.music.commands.settings.TodoCommand;
 import minn.music.hooks.impl.PrefixTeller;
 import minn.music.managers.CommandManager;
 import minn.music.managers.PrefixManager;
 import minn.music.settings.Config;
 import minn.music.util.IgnoreUtil;
 import minn.music.util.PlayerUtil;
+import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.JDAInfo;
 import net.dv8tion.jda.Permission;
 import net.dv8tion.jda.entities.Game;
@@ -37,9 +40,12 @@ import net.dv8tion.jda.utils.SimpleLog;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.time.OffsetTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -54,8 +60,16 @@ public class Main
 		return OffsetTime.now().format(DateTimeFormatter.ofPattern("[HH:mm:ss]"));
 	}
 
+	public static void rmSeg()
+	{
+		File[] files = new File("").listFiles();
+		if (files != null)
+			Arrays.stream(files).filter(f -> f.getName().matches("--(Seg\\d+|Init)")).forEach(File::delete);
+	}
+
 	public static void main(String... a) throws IOException
 	{
+		rmSeg();
 		LOG.info("JDA-Version: " + JDAInfo.VERSION);
 		PrefixManager.init();
 		Config cfg = new Config("Base.json", true);
@@ -68,7 +82,8 @@ public class Main
 		final int[] i = {0};
 		try
 		{
-			new MusicBot(manager -> {
+			new MusicBot(manager ->
+			{
 				UptimeCommand.start = System.currentTimeMillis();
 				AtomicReference<GenericCommand> command = new AtomicReference<>();
 
@@ -119,23 +134,28 @@ public class Main
 							event.send("You cannot use this command.");
 							return;
 						}
-						event.send("Shutting down...", msg -> {
-							final int[] i = {0, 1};
-							if (cfg.get("shards") != null)
-								i[1] = (int) cfg.get("shards");
-							manager.bot.managers.forEach(m -> {
-								m.getJDA().addEventListener((EventListener) event1 -> {
-									if (event1 instanceof ShutdownEvent && ++i[0] == i[1])
+						event.send("Shutting down...", msg ->
+						{
+							Collection<JDA> shards = manager.bot.getShards().values();
+							manager.bot.managers.forEach(m ->
+							{
+								m.getJDA().addEventListener((EventListener) event1 ->
+								{
+									if (event1 instanceof ShutdownEvent)
 									{
-										try
+										shards.remove(event1.getJDA());
+										if (shards.isEmpty())
 										{
-											Unirest.shutdown();
-										} catch (IOException e)
-										{
-											LOG.log(e);
+											try
+											{
+												Unirest.shutdown();
+											} catch (IOException e)
+											{
+												LOG.log(e);
+											}
+											QueueManager.save();
+											System.exit(0);
 										}
-										QueueManager.save();
-										System.exit(1);
 									}
 								});
 								QueueManager.save(m.getJDA());
@@ -246,6 +266,11 @@ public class Main
 				manager.registerCommand(command.get());
 				manager.registerCommand(new _Alias_("help", command.get(), true));
 
+				// Settings
+				command.set(new Container(new PrefixCommand(), "settings").setPrivate(false));
+				((Container) command.get()).addItem(new NickCommand());
+				((Container) command.get()).addItem(new TodoCommand());
+				manager.registerContainer((Container) command.get());
 
 				// Implemented
 				manager.registerCommand(new GenericCommand()
@@ -273,7 +298,6 @@ public class Main
 				addCustom(manager);
 
 
-
 				// Evals
 				try
 				{
@@ -291,8 +315,6 @@ public class Main
 				manager.registerCommand(new PingCommand());
 				manager.registerCommand(new UptimeCommand(manager.getJDA()));
 				manager.registerCommand(new AvatarCommand());
-				manager.registerCommand(new PrefixCommand());
-
 
 				/*manager.getJDA().addEventListener((EventListener) event ->
 				{
