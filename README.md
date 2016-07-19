@@ -38,6 +38,14 @@ Class:
     }
 ```
 
+Register Command:
+```java
+    new MusicBot(manager -> // callback containing CommandManager
+    {
+        manager.registerCommand(new MyCommand()); // register command
+    }, 1, new Config("Base.json", true));
+```
+
 ## Requirements
 1. A Bot Account.
 2. Python 3.5+
