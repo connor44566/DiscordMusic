@@ -7,9 +7,8 @@ plugins {
 group 'minn'
 version '1.0'
 
-
 //noinspection GroovyUnusedAssignment
-mainClassName="minn.music.Main"
+mainClassName = "minn.music.Main"
 compileJava.options.encoding = 'UTF-8'
 sourceCompatibility = 1.8
 
@@ -18,7 +17,7 @@ repositories {
 }
 
 dependencies {
-    //compile 'net.dv8tion:JDA:2.1.3_327'
+    compile 'net.dv8tion:JDA:2.2.0_335'
     compile fileTree(dir: 'libs', include: '*.jar')
-   //compile 'net.dv8tion:jda-player:0.2.1_9'
+    //compile 'net.dv8tion:jda-player:0.2.1_9'
 }

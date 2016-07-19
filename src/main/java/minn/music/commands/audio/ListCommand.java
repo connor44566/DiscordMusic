@@ -1,3 +1,19 @@
+/*
+ *      Copyright 2016 Florian Spieß (Minn).
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package minn.music.commands.audio;
 
 import minn.music.commands.GenericCommand;
@@ -60,18 +76,19 @@ public class ListCommand extends GenericCommand
 
 			if (!player.getAudioQueue().isEmpty())
 			{
-				response += "\n__Queue: **" + player.getAudioQueue().size() + "** entries.__\n";
+				StringBuilder b = new StringBuilder("\n__Queue: **").append(player.getAudioQueue().size()).append("** entries.__\n");
 				for (int i = 0; i < player.getAudioQueue().size(); i++)
 				{
 					AudioInfo info = player.getAudioQueue().get(i).getInfo();
 					if (i < 5)
-						response += "\n**" + (i + 1) + ")** `[" + info.getDuration().getTimestamp() + "]` " + info.getTitle().replaceAll("[*]{2}", "\\*\\*");
+						b.append("\n**").append(i + 1).append(")** `[").append(info.getDuration().getTimestamp()).append("]` ").append(info.getTitle().replaceAll("[*]{2}", "\\*\\*"));
 					total += info.getDuration().getTotalSeconds();
 				}
 				if (player.getAudioQueue().size() > 5)
 				{
-					response += "\n...";
+					b.append("\n...");
 				}
+				response += b.toString();
 			}
 			response += "\n" + (player.getAudioQueue().size() > 5 ? "\nFull list at: " + getDocument(player, event.guild) : "") + "\n" + TimeUtil.time(total) + " left.";
 
@@ -95,10 +112,12 @@ public class ListCommand extends GenericCommand
 			int spaces = ("" + queue.size()).length();
 			content += "\n\n\nQueue:\n";
 			int i = 0;
+			StringBuilder b = new StringBuilder(content);
 			for (AudioSource s : new LinkedList<>(queue))
 			{
-				content += "[" + adjust(++i, spaces) + "] [" + s.getInfo().getDuration().getTimestamp() + "] " + s.getInfo().getTitle() + "\n";
+				b.append("[").append(adjust(++i, spaces)).append("] [").append(s.getInfo().getDuration().getTimestamp()).append("] ").append(s.getInfo().getTitle()).append("\n");
 			}
+			content = b.toString();
 		}
 
 		try

@@ -1,12 +1,24 @@
+/*
+ *      Copyright 2016 Florian Spieß (Minn).
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package minn.music;
 
 import com.mashape.unirest.http.Unirest;
 import minn.music.audio.send.QueueManager;
 import minn.music.commands.*;
-import minn.music.commands.admin.DetermineShards;
-import minn.music.commands.admin.DetermineUsage;
-import minn.music.commands.admin.IgnoreCommand;
-import minn.music.commands.admin.StreamingCommand;
+import minn.music.commands.admin.*;
 import minn.music.commands.audio.*;
 import minn.music.commands.code.CmdCommand;
 import minn.music.commands.code.EvalCommand;
@@ -14,16 +26,15 @@ import minn.music.commands.code.JavaEval;
 import minn.music.commands.code.PythonEval;
 import minn.music.commands.media.*;
 import minn.music.commands.mod.*;
-import minn.music.commands.settings.NickCommand;
-import minn.music.commands.settings.PrefixCommand;
-import minn.music.commands.settings.TodoCommand;
+import minn.music.commands.settings.*;
 import minn.music.hooks.impl.PrefixTeller;
+import minn.music.managers.CarbonAPIManager;
 import minn.music.managers.CommandManager;
-import minn.music.managers.PrefixManager;
+import minn.music.managers.ModLogManager;
+import minn.music.managers.WelcomeManager;
 import minn.music.settings.Config;
-import minn.music.util.IgnoreUtil;
+import minn.music.settings.GuildSettings;
 import minn.music.util.PlayerUtil;
-import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.JDAInfo;
 import net.dv8tion.jda.Permission;
 import net.dv8tion.jda.entities.Game;
@@ -40,12 +51,7 @@ import net.dv8tion.jda.utils.SimpleLog;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.io.IOException;
-import java.time.OffsetTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -53,25 +59,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Main
 {
 	public final static SimpleLog LOG = SimpleLog.getLog("Main");
-	//public final static ReceiveManager rManager = new ReceiveManager();
-
-	public static String getTimestamp()
-	{
-		return OffsetTime.now().format(DateTimeFormatter.ofPattern("[HH:mm:ss]"));
-	}
-
-	public static void rmSeg()
-	{
-		File[] files = new File("").listFiles();
-		if (files != null)
-			Arrays.stream(files).filter(f -> f.getName().matches("--(Seg\\d+|Init)")).forEach(File::delete);
-	}
 
 	public static void main(String... a) throws IOException
 	{
-		rmSeg();
+		SimpleLog.getLog("AudioBridge").setLevel(SimpleLog.Level.TRACE);
 		LOG.info("JDA-Version: " + JDAInfo.VERSION);
-		PrefixManager.init();
 		Config cfg = new Config("Base.json", true);
 		int shards = 1;
 		if (cfg.get("shards") != null && cfg.get("shards") instanceof Integer)
@@ -80,11 +72,11 @@ public class Main
 			LOG.info("Shards: " + shards);
 		}
 		final int[] i = {0};
+		CarbonAPIManager carbonAPIManager = new CarbonAPIManager();
 		try
 		{
 			new MusicBot(manager ->
 			{
-				UptimeCommand.start = System.currentTimeMillis();
 				AtomicReference<GenericCommand> command = new AtomicReference<>();
 
 				// Moderation
@@ -98,7 +90,6 @@ public class Main
 				// Audio
 				command.set(new Container(new PlayCommand(), "audio").setPrivate(false));
 				((Container) command.get()).addItem(new JoinCommand(manager.bot));
-				((Container) command.get()).addItem(new PlayerCommand(manager.bot));
 				((Container) command.get()).addItem(new SkipCommand());
 				((Container) command.get()).addItem(new RemoveSongCommand());
 				((Container) command.get()).addItem(new AudioLeaveCommand());
@@ -136,15 +127,14 @@ public class Main
 						}
 						event.send("Shutting down...", msg ->
 						{
-							Collection<JDA> shards = manager.bot.getShards().values();
+							final int[] i = {manager.bot.getShards().size()};
 							manager.bot.managers.forEach(m ->
 							{
 								m.getJDA().addEventListener((EventListener) event1 ->
 								{
 									if (event1 instanceof ShutdownEvent)
 									{
-										shards.remove(event1.getJDA());
-										if (shards.isEmpty())
+										if (--i[0] <= 0)
 										{
 											try
 											{
@@ -154,6 +144,7 @@ public class Main
 												LOG.log(e);
 											}
 											QueueManager.save();
+											GuildSettings.save();
 											System.exit(0);
 										}
 									}
@@ -203,8 +194,11 @@ public class Main
 				});
 				((Container) command.get()).addItem(new StreamingCommand(manager.bot));
 				((Container) command.get()).addItem(new DetermineShards(manager.bot));
+				((Container) command.get()).addItem(new AvatarCommand());
 				((Container) command.get()).addItem(new DetermineUsage());
 				((Container) command.get()).addItem(new IgnoreCommand());
+				((Container) command.get()).addItem(new StatsCommand(manager.bot));
+				((Container) command.get()).addItem(new TestBridge());
 				manager.registerContainer((Container) command.get());
 
 				manager.registerCommand(new _Alias_("current", new GenericCommand()
@@ -270,6 +264,8 @@ public class Main
 				command.set(new Container(new PrefixCommand(), "settings").setPrivate(false));
 				((Container) command.get()).addItem(new NickCommand());
 				((Container) command.get()).addItem(new TodoCommand());
+				((Container) command.get()).addItem(new ModLogCommand());
+				((Container) command.get()).addItem(new WelcomeCommand());
 				manager.registerContainer((Container) command.get());
 
 				// Implemented
@@ -314,13 +310,7 @@ public class Main
 				// General
 				manager.registerCommand(new PingCommand());
 				manager.registerCommand(new UptimeCommand(manager.getJDA()));
-				manager.registerCommand(new AvatarCommand());
-
-				/*manager.getJDA().addEventListener((EventListener) event ->
-				{
-					if(event instanceof AudioConnectEvent)
-						rManager.registerJDA(((AudioConnectEvent) event).getConnectedChannel().getGuild());
-				});*/
+				manager.registerCommand(new DiscrimCommand(manager.bot));
 
 				manager.registerMentionListener(new PrefixTeller());
 				manager.getJDA().addEventListener((EventListener) event ->
@@ -330,10 +320,14 @@ public class Main
 					else if (event instanceof GuildLeaveEvent)
 						SimpleLog.getLog("Guild").info("Left " + ((GuildLeaveEvent) event).getGuild().getName());
 				});
+				new ModLogManager(manager.getJDA());
+				new WelcomeManager(manager.getJDA());
+				//GuildSettings.init();
 				QueueManager.resume(manager.getJDA());
+				carbonAPIManager.setBot(manager.bot);
+				carbonAPIManager.listenTo(manager.getJDA());
 				LOG.info((++i[0]) + " shards ready!");
 			}, shards, cfg);
-			IgnoreUtil.init();
 		} catch (Exception e)
 		{
 			LOG.fatal(e);

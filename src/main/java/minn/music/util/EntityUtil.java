@@ -1,3 +1,19 @@
+/*
+ *      Copyright 2016 Florian Spieß (Minn).
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package minn.music.util;
 
 import com.mashape.unirest.http.Unirest;
@@ -8,9 +24,30 @@ import net.dv8tion.jda.utils.AvatarUtil;
 
 import java.io.InputStream;
 import java.util.LinkedList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class EntityUtil
 {
+
+	/**
+	 * Replaces mentions (<@!?(\d{16,}>) with {@link EntityUtil#transform(net.dv8tion.jda.entities.User)}.
+	 * @param message Message to trim.
+	 * @param api JDA instance.
+	 * @return Stripped message.
+	 */
+	public static String stripMentions(String message, JDA api)
+	{
+		Matcher matcher = Pattern.compile("<@!?(\\d{16,})>").matcher(message);
+		String replacement = message;
+		while (matcher.find())
+		{
+			String id = matcher.group().replaceAll("<@!?(\\d{16,})>", "$1");
+			replacement = matcher.replaceFirst(EntityUtil.transform(api.getUserById(id)));
+			matcher.reset(replacement);
+		}
+		return replacement;
+	}
 
 	/**
 	 * Return whether the you were mentioned or not.
@@ -44,8 +81,7 @@ public class EntityUtil
 	 */
 	public static String transform(User user)
 	{
-		assert user != null;
-		return user.getUsername() + "#" + user.getDiscriminator();
+		return user == null ? "unknown" : user.getUsername() + "#" + user.getDiscriminator();
 	}
 
 	/**
@@ -91,7 +127,28 @@ public class EntityUtil
 			return null;
 		if (isID(s))
 			return api.getTextChannelById(s);
-		return (isChannelMention(s) ? api.getTextChannelById(s.replaceAll("^<#(\\d{16,})>$", "$1")) : null);
+		return (isChannelMention(s) ? api.getTextChannelById(s.replaceAll("^<#(\\d{16,})>$", "$1")) : getFirstText(s, api));
+	}
+
+	/**
+	 * Resolves {@link net.dv8tion.jda.entities.TextChannel TextChannel} from given {@link String}.
+	 * <h3>Parsable Strings</h3>
+	 * <ul>
+	 * <li><#191249209553321985></li>
+	 * <li>191249209553321985</li>
+	 * </ul>
+	 *
+	 * @param s   String to parse
+	 * @param guild {@link net.dv8tion.jda.JDA JDA} instance to get Channel instance from.
+	 * @return A Channel instance fitting to the unique parsed <i>s</i>. Or null if no channel fits.
+	 */
+	public static TextChannel resolveTextChannel(String s, Guild guild)
+	{
+		if (s == null || s.isEmpty())
+			return null;
+		if (isID(s))
+			return guild.getTextChannels().parallelStream().filter(c -> c.getId().equals(s)).findFirst().orElse(null);
+		return (isChannelMention(s) ? guild.getTextChannels().parallelStream().filter(c -> c.getId().equals(s.replaceAll("^<#(\\d{16,})>$", "$1"))).findFirst().orElse(null) : getFirstText(s, guild));
 	}
 
 	/**
@@ -194,7 +251,8 @@ public class EntityUtil
 
 	/**
 	 * Retrieves the VoiceChannel for given User of given Guild instance.
-	 * @param user User instance
+	 *
+	 * @param user  User instance
 	 * @param guild Guild instance
 	 * @return VoiceChannel of user or null.
 	 */
@@ -214,7 +272,8 @@ public class EntityUtil
 	public static VoiceChannel getFirstVoice(String match, JDA api)
 	{
 		String lowerCase = match.toLowerCase();
-		return api.getVoiceChannels().parallelStream().filter(c -> c.getName().toLowerCase().contains(lowerCase)).sorted((o1, o2) -> {
+		return api.getVoiceChannels().parallelStream().filter(c -> c.getName().toLowerCase().contains(lowerCase)).sorted((o1, o2) ->
+		{
 			if (o1.getName().length() < o2.getName().length())
 				return -1;
 			if (o1.getName().length() > o2.getName().length())
@@ -233,7 +292,8 @@ public class EntityUtil
 	public static TextChannel getFirstText(String match, JDA api)
 	{
 		String lowerCase = match.toLowerCase();
-		return api.getTextChannels().parallelStream().filter(c -> c.getName().toLowerCase().contains(lowerCase)).sorted((o1, o2) -> {
+		return api.getTextChannels().parallelStream().filter(c -> c.getName().toLowerCase().contains(lowerCase)).sorted((o1, o2) ->
+		{
 			if (o1.getName().length() < o2.getName().length())
 				return -1;
 			if (o1.getName().length() > o2.getName().length())
@@ -252,7 +312,8 @@ public class EntityUtil
 	public static VoiceChannel getFirstVoice(String match, Guild guild)
 	{
 		String lowerCase = match.toLowerCase();
-		return guild.getVoiceChannels().parallelStream().filter(c -> c.getName().toLowerCase().contains(lowerCase)).sorted((o1, o2) -> {
+		return guild.getVoiceChannels().parallelStream().filter(c -> c.getName().toLowerCase().contains(lowerCase)).sorted((o1, o2) ->
+		{
 			if (o1.getName().length() < o2.getName().length())
 				return -1;
 			if (o1.getName().length() > o2.getName().length())
@@ -271,7 +332,8 @@ public class EntityUtil
 	public static TextChannel getFirstText(String match, Guild guild)
 	{
 		String lowerCase = match.toLowerCase();
-		return guild.getTextChannels().parallelStream().filter(c -> c.getName().toLowerCase().contains(lowerCase)).sorted((o1, o2) -> {
+		return guild.getTextChannels().parallelStream().filter(c -> c.getName().toLowerCase().contains(lowerCase)).sorted((o1, o2) ->
+		{
 			if (o1.getName().length() < o2.getName().length())
 				return -1;
 			if (o1.getName().length() > o2.getName().length())
@@ -290,7 +352,8 @@ public class EntityUtil
 	public static Guild getFirstGuild(String match, JDA api)
 	{
 		String lowerCase = match.toLowerCase();
-		return api.getGuilds().parallelStream().filter(g -> g.getName().toLowerCase().contains(lowerCase)).sorted((o1, o2) -> {
+		return api.getGuilds().parallelStream().filter(g -> g.getName().toLowerCase().contains(lowerCase)).sorted((o1, o2) ->
+		{
 			if (o1.getName().length() < o2.getName().length())
 				return -1;
 			if (o1.getName().length() > o2.getName().length())

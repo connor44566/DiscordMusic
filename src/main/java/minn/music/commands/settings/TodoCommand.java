@@ -1,3 +1,19 @@
+/*
+ *      Copyright 2016 Florian Spieß (Minn).
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package minn.music.commands.settings;
 
 import minn.music.commands.GenericCommand;
@@ -8,6 +24,7 @@ import net.dv8tion.jda.entities.TextChannel;
 import net.dv8tion.jda.utils.PermissionUtil;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,7 +35,7 @@ public class TodoCommand extends GenericCommand
 	public String getInfo()
 	{
 		return "Creates/Writes to a todo list in a channel with the name #todo.\n" +
-				"Setup: Create a channel with the name #todo and give to bot send/read access. (Including read history).\n" +
+				"Setup: Create a channel with the name #todo and give the bot send/read access. (Including read history).\n" +
 				"Only users with **MANAGE_SERVER** have access to the todo list.";
 	}
 
@@ -55,21 +72,26 @@ public class TodoCommand extends GenericCommand
 
 		if (!channel.checkPermission(event.api.getSelfInfo(), Permission.MESSAGE_HISTORY))
 		{
-			event.send("I can't read the message history in that channel.");
+			event.send("I can't read the message history in " + channel.getAsMention() + ".");
 			return;
 		}
 		if (!channel.checkPermission(event.api.getSelfInfo(), Permission.MESSAGE_READ))
 		{
-			event.send("I can't read the messages sent in that channel.");
+			event.send("I can't read the messages sent in " + channel.getAsMention() + ".");
 			return;
 		}
 		if (!channel.checkPermission(event.api.getSelfInfo(), Permission.MESSAGE_WRITE))
 		{
-			event.send("I can't send a message in that channel.");
+			event.send("I can't send a message in " + channel.getAsMention() + ".");
 			return;
 		}
 
-		List<Message> hist = channel.getHistory().retrieve(10);
+		List<Message> hist = channel
+				.getHistory()
+				.retrieve(10)
+				.parallelStream()
+				.filter(m -> m.getAuthor() == event.api.getSelfInfo())
+				.collect(Collectors.toList());
 
 		try
 		{
@@ -98,21 +120,26 @@ public class TodoCommand extends GenericCommand
 			{
 				throw new IllegalArgumentException("Invalid input. Method **" + args[0] + "** undefined. (Add/Remove/Strike/Clear)");
 			}
+			case "empty":
 			case "clear":
 			{
-				for (Message m : hist)
+
+				for (Iterator<Message> it = hist.iterator(); it.hasNext(); )
 				{
-					m.deleteMessage();
-					try
-					{
-						Thread.sleep(2000);
-					} catch (InterruptedException e)
-					{
-						e.printStackTrace();
-					}
+					it.next().deleteMessage();
+					if (it.hasNext())
+						try
+						{
+							Thread.sleep(2000);
+						} catch (InterruptedException e)
+						{
+							e.printStackTrace();
+						}
+					else break;
 				}
 				return "Cleared " + channel.getAsMention() + ".";
 			}
+			case "insert":
 			case "add":
 			{
 				if (args.length < 2)
@@ -129,6 +156,8 @@ public class TodoCommand extends GenericCommand
 					hist.get(hist.size() - 1).updateMessageAsync(String.join("\n", (CharSequence[]) chunks[chunks.length - 1]) + "\n" + lines.size() + ") " + message, null);
 				return "Added to the list.";
 			}
+			case "delete":
+			case "rm":
 			case "remove":
 			{
 				if (args.length < 2)
@@ -184,6 +213,8 @@ public class TodoCommand extends GenericCommand
 				}
 				return "Removed from the list.";
 			}
+			case "mark":
+			case "check":
 			case "strike":
 			{
 				if (args.length < 2)

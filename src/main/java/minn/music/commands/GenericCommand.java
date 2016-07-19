@@ -1,3 +1,19 @@
+/*
+ *      Copyright 2016 Florian Spieß (Minn).
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package minn.music.commands;
 
 import minn.music.MusicBot;
@@ -147,8 +163,18 @@ public abstract class GenericCommand
 			try
 			{
 				message = message.replace(MusicBot.config.token, "<place token here>").replace("@everyone", "@\u0001everyone").replace("@here", "@\u0001here"); // no mass mentions or token
-				channel.sendMessageAsync(message, msg -> {
-					if (callback != null) new Thread(() -> callback.accept(msg), "Async Callback Accept").start();
+				channel.sendMessageAsync(message, msg ->
+				{
+					if (callback != null) new Thread(() ->
+					{
+						try
+						{
+							callback.accept(msg);
+						} catch (Exception e)
+						{
+							SimpleLog.getLog("SenderThread").fatal(e);
+						}
+					}, "Async Callback Accept").start();
 				}); // async
 			} catch (Exception e)
 			{

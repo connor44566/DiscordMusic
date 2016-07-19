@@ -1,3 +1,19 @@
+/*
+ *      Copyright 2016 Florian Spieß (Minn).
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package minn.music.commands.admin;
 
 import minn.music.MusicBot;
@@ -5,6 +21,7 @@ import minn.music.commands.GenericCommand;
 import minn.music.util.EntityUtil;
 import minn.music.util.IgnoreUtil;
 import net.dv8tion.jda.entities.TextChannel;
+import net.dv8tion.jda.entities.User;
 
 public class IgnoreCommand extends GenericCommand
 {
@@ -16,7 +33,7 @@ public class IgnoreCommand extends GenericCommand
 
 	public String getAttributes()
 	{
-		return "<+/-> <channel>";
+		return "<+/-> <type> <channel>";
 	}
 
 	@Override
@@ -33,7 +50,7 @@ public class IgnoreCommand extends GenericCommand
 			event.send("Not happening.");
 			return;
 		}
-		if (event.args.length < 2)
+		if (event.args.length < 3)
 		{
 			event.send("Usage: " + getAlias() + " " + getAttributes());
 			return;
@@ -44,18 +61,48 @@ public class IgnoreCommand extends GenericCommand
 			event.send("Invalid method. Try +/-");
 			return;
 		}
-		String channel = event.allArgs.split("\\s+", 2)[1];
-		TextChannel target = EntityUtil.resolveTextChannel(channel, event.api);
+		if (event.args[1].equalsIgnoreCase("channel"))
+			ignoreChannel(method.equals("+"), event);
+		else if (event.args[1].equalsIgnoreCase("user"))
+			ignoreUser(method.equals("+"), event);
+		else
+			event.send("Type not supported.");
+	}
+
+	private void ignoreUser(boolean ignore, CommandEvent event)
+	{
+		String indicator = event.allArgs.split("\\s+", 3)[2];
+		User target = EntityUtil.resolveUser(indicator, event.api);
 		if (target == null)
 		{
-			if (channel.equalsIgnoreCase("all"))
+			event.send("No matching user");
+		} else
+		{
+			if (ignore)
 			{
-				if (method.equals("+"))
+				IgnoreUtil.ignore(target);
+				event.send("Now ignoring **" + target.getAsMention() + "**.");
+			} else
+			{
+				IgnoreUtil.unIgnore(target);
+				event.send("Stopped ignoring **" + target.getAsMention() + "**.");
+			}
+		}
+	}
+
+	private void ignoreChannel(boolean ignore, CommandEvent event)
+	{
+		String indicator = event.allArgs.split("\\s+", 3)[2];
+		TextChannel target = EntityUtil.resolveTextChannel(indicator, event.api);
+		if (target == null)
+		{
+			if (indicator.equalsIgnoreCase("all"))
+			{
+				if (ignore)
 				{
 					IgnoreUtil.ignore((TextChannel[]) event.guild.getTextChannels().toArray());
 					event.send("Stopped listening to this guild.");
-				}
-				else
+				} else
 				{
 					IgnoreUtil.unIgnore((TextChannel[]) event.guild.getTextChannels().toArray());
 					event.send("Listening to entire guild now.");
@@ -65,7 +112,7 @@ public class IgnoreCommand extends GenericCommand
 			target = EntityUtil.getFirstText(event.allArgs, event.guild);
 			if (target != null)
 			{
-				if(method.equals("+"))
+				if (ignore)
 				{
 					IgnoreUtil.ignore(target);
 					event.send("Now ignoring **" + target.getName() + "**.");
@@ -79,7 +126,7 @@ public class IgnoreCommand extends GenericCommand
 			event.send("No matching channel found.");
 		} else
 		{
-			if(method.equals("+"))
+			if (ignore)
 			{
 				IgnoreUtil.ignore(target);
 				event.send("Now ignoring **" + target.getName() + "**.");

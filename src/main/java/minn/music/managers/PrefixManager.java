@@ -1,3 +1,19 @@
+/*
+ *      Copyright 2016 Florian Spieß (Minn).
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package minn.music.managers;
 
 import minn.music.MusicBot;
@@ -14,39 +30,31 @@ public class PrefixManager
 {
 
 	private static HashMap<String, String> prefixMap;
-	private static boolean init = false;
 
-	public static void init()
+	static
 	{
-		if (init)
-			return;
 		prefixMap = (HashMap<String, String>) PersistenceUtil.retrieve("prefixMap");
 		if (prefixMap == null)
 			prefixMap = new HashMap<>();
-		init = true;
 	}
 
 	public static HashMap<String, String> getPrefixMap()
 	{
-		assert init : "PrefixManager.init() must be called before any other methods.";
 		return new HashMap<>(prefixMap);
 	}
 
 	public static String getPrefix(Guild guild)
 	{
-		assert init : "PrefixManager.init() must be called before any other methods.";
 		return guild != null ? getPrefix(guild.getId()) : MusicBot.config.prefix;
 	}
 
 	public static String getPrefix(String guildID)
 	{
-		assert init : "PrefixManager.init() must be called before any other methods.";
 		return prefixMap.containsKey(guildID) ? prefixMap.get(guildID) : MusicBot.config.prefix;
 	}
 
 	public static boolean setCustom(Guild guild, String fix)
 	{
-		assert init : "PrefixManager.init() must be called before any other methods.";
 		prefixMap.put(guild.getId(), fix);
 		save();
 		return true;
@@ -54,7 +62,6 @@ public class PrefixManager
 
 	public static boolean removeCustom(Guild guild)
 	{
-		assert init : "PrefixManager.init() must be called before any other methods.";
 		if (prefixMap.containsKey(guild.getId()))
 			prefixMap.remove(guild.getId());
 		save();
@@ -69,7 +76,6 @@ public class PrefixManager
 	 */
 	public static boolean isCustom(String message, Guild guild)
 	{
-		assert init : "PrefixManager.init() must be called before any other methods.";
 		return message.startsWith(getPrefix(guild));
 	}
 
@@ -81,7 +87,6 @@ public class PrefixManager
 	 */
 	public static boolean isCustom(Message message, Guild guild)
 	{
-		assert init : "PrefixManager.init() must be called before any other methods.";
 		return guild != null && message != null && isCustom(message.getRawContent(), guild);
 	}
 
