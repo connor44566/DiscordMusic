@@ -51,3 +51,4 @@ Register Command:
 2. Python 3.5+
 3. Java 1.8+
 4. [DV8FromTheWorld/JDA](https://github.com/DV8FromTheWorld/JDA)
+5. [DV8FromTheWorld/JDA-Player](https://github.com/DV8FromTheWorld/JDA-Player)
