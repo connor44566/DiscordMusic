@@ -14,7 +14,7 @@ You can clone this repository to fork the bot.
 
 #### Create a command
 Class:
-
+```java
     public class MyCommand extends GenericCommand 
     {
         public MyCommand()
@@ -36,7 +36,7 @@ Class:
             return true;
         }
     }
-
+```
 
 ## Requirements
 1. A Bot Account.
