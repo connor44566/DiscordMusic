@@ -17,7 +17,7 @@ public class ModLogCommand extends GenericCommand
 
 	public String getInfo()
 	{
-		return "Sets the guild's modlog channel.\n__Features:__\n> Ban tracking\n> Nickname changes\n>Username changes\n\nRequires permission **MANAGE_SERVER**.";
+		return "Sets the guild's modlog channel.\n__Features:__\n> Ban tracking\n> Nickname changes\n> Username changes\n\nRequires permission **MANAGE_SERVER**.";
 	}
 
 	public boolean isPrivate()
@@ -36,7 +36,7 @@ public class ModLogCommand extends GenericCommand
 	{
 		if (!PermissionUtil.checkPermission(event.author, Permission.MANAGE_SERVER, event.guild))
 		{
-			event.send("You are missing required permission.");
+			event.send("You are missing required permissions.");
 			return;
 		}
 		TextChannel channel = (TextChannel) event.channel;

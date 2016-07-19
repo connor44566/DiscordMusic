@@ -86,23 +86,24 @@ public class TodoCommand extends GenericCommand
 			return;
 		}
 
-		List<Message> hist = channel
+		List<Message> untouched = channel
 				.getHistory()
-				.retrieve(10)
+				.retrieve(10);
+		List<Message> hist = (untouched == null ? new LinkedList<Message>() : untouched)
 				.parallelStream()
 				.filter(m -> m.getAuthor() == event.api.getSelfInfo())
 				.collect(Collectors.toList());
 
 		try
 		{
-			event.send(todo(event.args, event.allArgs, hist, channel));
+			todo(event.args, event.allArgs, hist, channel);
 		} catch (IllegalArgumentException e)
 		{
 			event.send(e.getMessage());
 		}
 	}
 
-	public synchronized String todo(String[] args, String allArgs, List<Message> hist, TextChannel channel)
+	public synchronized void todo(String[] args, String allArgs, List<Message> hist, TextChannel channel)
 	{
 		List<String> lines = new LinkedList<>();
 		String[][] chunks = new String[0][];
@@ -137,7 +138,7 @@ public class TodoCommand extends GenericCommand
 						}
 					else break;
 				}
-				return "Cleared " + channel.getAsMention() + ".";
+				break;
 			}
 			case "insert":
 			case "add":
@@ -154,7 +155,24 @@ public class TodoCommand extends GenericCommand
 					channel.sendMessageAsync(lines.size() + ") " + message, null);
 				else
 					hist.get(hist.size() - 1).updateMessageAsync(String.join("\n", (CharSequence[]) chunks[chunks.length - 1]) + "\n" + lines.size() + ") " + message, null);
-				return "Added to the list.";
+				break;
+			}
+			case "update":
+			case "alter":
+			case "edit":
+			{
+				if (args.length < 3)
+					throw new IllegalArgumentException("Missing parameters. Read command info for instructions.");
+				int index = getIndex(args[1]);
+				if (index < 0 || index >= lines.size())
+					throw new IllegalArgumentException("Index is out of range (1-" + lines.size() + ").");
+				int chunkID = index / 10;
+				Message m = hist.get(chunkID);
+				String message = allArgs.split("\\s+", 3)[2].replaceAll("(\n|~~)", "");
+				chunks[chunkID][index] = lines.get(index).replaceAll("^((?:~~)?\\d+\\) ).+$", "$1" + message);
+				String newContent = String.join("\n", (CharSequence[]) chunks[chunkID]);
+				m.updateMessageAsync(newContent, null);
+				break;
 			}
 			case "delete":
 			case "rm":
@@ -166,7 +184,6 @@ public class TodoCommand extends GenericCommand
 				if (index < 0 || index >= lines.size())
 					throw new IllegalArgumentException("Index is out of range (1-" + lines.size() + ").");
 				int chunkID = index / 10;
-				int lineOfChunk = index % 10;
 				List<Message> affectedMessages = hist.subList(chunkID, hist.size());
 				lines.remove(index);
 				List<String> prevLines = lines.subList(chunkID * 10, index);
@@ -180,6 +197,7 @@ public class TodoCommand extends GenericCommand
 					if (!prevLines.isEmpty())
 					{
 						List<String> newContent = new LinkedList<>(prevLines);
+						prevLines.clear();
 						while (!updatedLines.isEmpty() && newContent.size() < 10)
 						{
 							newContent.add(updatedLines.get(0));
@@ -211,7 +229,7 @@ public class TodoCommand extends GenericCommand
 						m.updateMessageAsync(content, null);
 					}
 				}
-				return "Removed from the list.";
+				break;
 			}
 			case "mark":
 			case "check":
@@ -231,7 +249,7 @@ public class TodoCommand extends GenericCommand
 				else
 					chunks[chunkID][lineOfChunk] = chunks[chunkID][lineOfChunk].replaceAll("~~(.+)~~", "$1");
 				msg.updateMessageAsync(String.join("\n", (CharSequence[]) chunks[chunkID]), null);
-				return "Done.";
+				break;
 			}
 		}
 	}

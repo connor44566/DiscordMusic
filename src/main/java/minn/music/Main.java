@@ -198,7 +198,6 @@ public class Main
 				((Container) command.get()).addItem(new DetermineUsage());
 				((Container) command.get()).addItem(new IgnoreCommand());
 				((Container) command.get()).addItem(new StatsCommand(manager.bot));
-				((Container) command.get()).addItem(new TestBridge());
 				manager.registerContainer((Container) command.get());
 
 				manager.registerCommand(new _Alias_("current", new GenericCommand()
