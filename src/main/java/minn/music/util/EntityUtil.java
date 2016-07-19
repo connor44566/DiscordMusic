@@ -30,19 +30,26 @@ import java.util.regex.Pattern;
 public class EntityUtil
 {
 
+	// Patterns
+	public static final String ID = "\\d{16,}";
+	public static final String USER_MENTION = "<?!@(" + ID + ")>";
+	public static final String CHANNEL_MENTION = "<#(" + ID + ")>";
+	public static final String USER_TAG = "\\S.{0,30}\\S#\\d{4}";
+
 	/**
 	 * Replaces mentions (<@!?(\d{16,}>) with {@link EntityUtil#transform(net.dv8tion.jda.entities.User)}.
+	 *
 	 * @param message Message to trim.
-	 * @param api JDA instance.
+	 * @param api     JDA instance.
 	 * @return Stripped message.
 	 */
 	public static String stripMentions(String message, JDA api)
 	{
-		Matcher matcher = Pattern.compile("<@!?(\\d{16,})>").matcher(message);
+		Matcher matcher = Pattern.compile(USER_MENTION).matcher(message);
 		String replacement = message;
 		while (matcher.find())
 		{
-			String id = matcher.group().replaceAll("<@!?(\\d{16,})>", "$1");
+			String id = matcher.group().replaceAll(USER_MENTION, "$1");
 			replacement = matcher.replaceFirst(EntityUtil.transform(api.getUserById(id)));
 			matcher.reset(replacement);
 		}
@@ -105,7 +112,7 @@ public class EntityUtil
 		if (isID(s))
 			return api.getUserById(s);
 		if (isMention(s))
-			return api.getUserById(s.replaceAll("^<@!?(\\d{16,})>$", "$1"));
+			return api.getUserById(s.replaceAll(USER_MENTION, "$1"));
 		return getUserByNameDiscriminator(s, api);
 	}
 
@@ -127,7 +134,7 @@ public class EntityUtil
 			return null;
 		if (isID(s))
 			return api.getTextChannelById(s);
-		return (isChannelMention(s) ? api.getTextChannelById(s.replaceAll("^<#(\\d{16,})>$", "$1")) : getFirstText(s, api));
+		return (isChannelMention(s) ? api.getTextChannelById(s.replaceAll(CHANNEL_MENTION, "$1")) : getFirstText(s, api));
 	}
 
 	/**
@@ -138,7 +145,7 @@ public class EntityUtil
 	 * <li>191249209553321985</li>
 	 * </ul>
 	 *
-	 * @param s   String to parse
+	 * @param s     String to parse
 	 * @param guild {@link net.dv8tion.jda.JDA JDA} instance to get Channel instance from.
 	 * @return A Channel instance fitting to the unique parsed <i>s</i>. Or null if no channel fits.
 	 */
@@ -148,7 +155,7 @@ public class EntityUtil
 			return null;
 		if (isID(s))
 			return guild.getTextChannels().parallelStream().filter(c -> c.getId().equals(s)).findFirst().orElse(null);
-		return (isChannelMention(s) ? guild.getTextChannels().parallelStream().filter(c -> c.getId().equals(s.replaceAll("^<#(\\d{16,})>$", "$1"))).findFirst().orElse(null) : getFirstText(s, guild));
+		return (isChannelMention(s) ? guild.getTextChannels().parallelStream().filter(c -> c.getId().equals(s.replaceAll(CHANNEL_MENTION, "$1"))).findFirst().orElse(null) : getFirstText(s, guild));
 	}
 
 	/**
@@ -212,7 +219,7 @@ public class EntityUtil
 	 */
 	public static boolean isValidTag(String tag)
 	{
-		return tag.matches("^\\S.{0,30}\\S#\\d{4}$");
+		return tag.matches(USER_TAG);
 	}
 
 	/**
@@ -223,7 +230,7 @@ public class EntityUtil
 	 */
 	public static boolean isMention(String mention)
 	{
-		return mention.matches("^<@!?\\d{16,}>$");
+		return mention.matches(USER_MENTION);
 	}
 
 	/**
@@ -234,7 +241,7 @@ public class EntityUtil
 	 */
 	public static boolean isChannelMention(String mention)
 	{
-		return mention.matches("^<#\\d{16,}>$");
+		return mention.matches(CHANNEL_MENTION);
 	}
 
 	/**
@@ -245,7 +252,7 @@ public class EntityUtil
 	 */
 	public static boolean isID(String id)
 	{
-		return id.matches("^\\d{16,}$");
+		return id.matches(ID);
 	}
 
 

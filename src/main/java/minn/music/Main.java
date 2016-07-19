@@ -322,7 +322,6 @@ public class Main
 				});
 				new ModLogManager(manager.getJDA());
 				new WelcomeManager(manager.getJDA());
-				//GuildSettings.init();
 				QueueManager.resume(manager.getJDA());
 				carbonAPIManager.setBot(manager.bot);
 				carbonAPIManager.listenTo(manager.getJDA());
