@@ -50,3 +50,4 @@ Register Command:
 1. A Bot Account.
 2. Python 3.5+
 3. Java 1.8+
+4. [DV8FromTheWorld/JDA](https://github.com/DV8FromTheWorld/JDA)
