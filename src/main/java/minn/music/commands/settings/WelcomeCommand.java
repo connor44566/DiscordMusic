@@ -15,7 +15,7 @@ public class WelcomeCommand extends GenericCommand
 				"\n> UNSET (**-1**) - No welcome messages (default)" +
 				"\n> NORMAL (**0**) - Sends a message in public channel." +
 				"\n> MENTION (**1**) - Sends a message in public channel and mentions the new user." +
-				"\n> DIRECT (**2**) - Sends a DM to the new user.\n\n__Vars:__ `userid`,`server`, `mention` (Surround with {var}, example `{userid}`)";
+				"\n> DIRECT (**2**) - Sends a DM to the new user.\n\n__Vars:__ `userid`,`server`, `mention`, `user` (Surround with {var}, example `{userid}`)";
 	}
 
 	public String getAttributes()

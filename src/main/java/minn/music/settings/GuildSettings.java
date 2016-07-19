@@ -136,6 +136,7 @@ public class GuildSettings
 				.replace("{userid}", event.getUser().getId())
 				.replace("{server}", event.getGuild().getName())
 				.replace("{mention}", event.getUser().getAsMention())
+				.replace("{user}", event.getUser().getUsername())
 				.replace("@everyone", "@\u0001everyone")
 				.replace("@here", "@\u0001here");
 	}
