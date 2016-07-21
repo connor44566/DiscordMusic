@@ -60,9 +60,12 @@ public class ConnectionManager
 					if (p.isPlaying() || last_check.get(p) + KEEP_ALIVE_TIME > System.currentTimeMillis())
 						return;
 					AudioManager manager = getManagerFor(g);
-					if (manager.isConnected())
-						manager.closeAudioConnection();
-					manager.setSendingHandler(null);
+					if (manager != null)
+					{
+						if (manager.isConnected())
+							manager.closeAudioConnection();
+						manager.setSendingHandler(null);
+					}
 					p.removeEventListener(listener);
 					last_check.remove(p);
 					toRemove.add(g);

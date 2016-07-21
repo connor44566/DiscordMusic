@@ -22,15 +22,20 @@ import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.entities.Role;
 import net.dv8tion.jda.entities.TextChannel;
+import net.dv8tion.jda.entities.User;
+import net.dv8tion.jda.entities.impl.MessageImpl;
 import net.dv8tion.jda.events.Event;
 import net.dv8tion.jda.events.guild.member.*;
 import net.dv8tion.jda.exceptions.PermissionException;
 import net.dv8tion.jda.hooks.EventListener;
+import net.dv8tion.jda.utils.SimpleLog;
 
 import java.util.List;
 
 public class ModLogManager implements EventListener
 {
+
+	private Tuple<User, MessageImpl> tuple = new Tuple<>();
 
 	public static TextChannel getChannel(GuildSettings settings, JDA jda, Guild guild)
 	{
@@ -46,28 +51,36 @@ public class ModLogManager implements EventListener
 	{
 		TextChannel target = getChannel(GuildSettings.get(event.getGuild()), event.getJDA(), event.getGuild());
 		if (target == null) return;
-		target.sendMessageAsync(("Removed role(s) `" + joinRoles(event.getRoles()) + "` from **" + EntityUtil.transform(event.getUser()) + "**.").replace("@", "@\u0001"), null);
+		target.sendMessageAsync(("Removed role(s) `" + joinRoles(event.getRoles()).replace("`", "\\`") + "` from **" + EntityUtil.transform(event.getUser()).replace("*", "\\*") + "**.").replace("@", "@\u0001"), null);
 	}
 
 	public void onRoleAdd(GuildMemberRoleAddEvent event)
 	{
 		TextChannel target = getChannel(GuildSettings.get(event.getGuild()), event.getJDA(), event.getGuild());
 		if (target == null) return;
-		target.sendMessageAsync(("Added role(s) `" + joinRoles(event.getRoles()) + "` to **" + EntityUtil.transform(event.getUser()) + "**.").replace("@", "@\u0001"), null);
+		target.sendMessageAsync(("Added role(s) `" + joinRoles(event.getRoles()).replace("`", "\\`") + "` to **" + EntityUtil.transform(event.getUser()).replace("*", "\\*") + "**.").replace("@", "@\u0001"), null);
 	}
 
 	public void onBan(GuildMemberBanEvent event)
 	{
 		TextChannel target = getChannel(GuildSettings.get(event.getGuild()), event.getJDA(), event.getGuild());
 		if (target == null) return;
-		target.sendMessageAsync(("_**" + EntityUtil.transform(event.getUser()) + "** was banned._").replace("@", "@\u0001"), null);
+		target.sendMessageAsync(("_**" + EntityUtil.transform(event.getUser()).replaceAll("(\\*\\*|_)", "\\\\$1") + "** was banned._").replace("@", "@\u0001"),
+				m -> tuple.set(event.getUser(), (m != null ? (MessageImpl) m : null)));
 	}
 
 	public void onUnBan(GuildMemberUnbanEvent event)
 	{
+		System.out.println((tuple.time + 30000) + " > " + System.currentTimeMillis());
+		if (tuple.user == event.getUser() && tuple.time + 30000 >= System.currentTimeMillis())
+		{
+			tuple.message.updateMessageAsync(tuple.message.getRawContent().replaceAll("banned\\._$", "softbanned._"), null);
+			tuple.set(null, null);
+			return;
+		}
 		TextChannel target = getChannel(GuildSettings.get(event.getGuild()), event.getJDA(), event.getGuild());
 		if (target == null) return;
-		target.sendMessageAsync(("_**" + EntityUtil.transform(event.getUser()) + "** was unbanned._").replace("@", "@\u0001"), null);
+		target.sendMessageAsync(("_**" + EntityUtil.transform(event.getUser()).replaceAll("(\\*\\*|_)", "\\\\$1") + "** was unbanned._").replace("@", "@\u0001"), null);
 	}
 
 	public void onNickChange(GuildMemberNickChangeEvent event)
@@ -75,11 +88,11 @@ public class ModLogManager implements EventListener
 		TextChannel target = getChannel(GuildSettings.get(event.getGuild()), event.getJDA(), event.getGuild());
 		if (target == null) return;
 		if (event.getNewNick() != null && event.getPrevNick() != null)
-			target.sendMessageAsync(("Nick update: **" + event.getPrevNick() + "** -> **" + event.getNewNick() + "**.").replace("@", "@\u0001"), null);
+			target.sendMessageAsync(("Nick update: **" + event.getPrevNick().replace("*", "\\*") + "** -> **" + event.getNewNick().replace("*", "\\*") + "**.").replace("@", "@\u0001"), null);
 		else if (event.getNewNick() == null && event.getPrevNick() != null)
-			target.sendMessageAsync(("Nick update: **" + event.getPrevNick() + "** -> **" + event.getUser().getUsername() + "**.").replace("@", "@\u0001"), null);
+			target.sendMessageAsync(("Nick update: **" + event.getPrevNick().replace("*", "\\*") + "** -> **" + event.getUser().getUsername().replace("*", "\\*") + "**.").replace("@", "@\u0001"), null);
 		else if (event.getPrevNick() == null)
-			target.sendMessageAsync(("Nick update: **" + event.getUser().getUsername() + "** -> **" + event.getNewNick() + "**.").replace("@", "@\u0001"), null);
+			target.sendMessageAsync(("Nick update: **" + event.getUser().getUsername().replace("*", "\\*") + "** -> **" + event.getNewNick().replace("*", "\\*") + "**.").replace("@", "@\u0001"), null);
 	}
 
 	private static String joinRoles(List<Role> roles)
@@ -111,9 +124,9 @@ public class ModLogManager implements EventListener
 					onRoleRemove((GuildMemberRoleRemoveEvent) event);
 			} catch (PermissionException ignored)
 			{
-			} catch (Exception e) // Permission exceptions
+			} catch (Exception e) // Non-Permission exceptions
 			{
-				System.out.println(e.toString());
+				SimpleLog.getLog("ModLog").log(e);
 			}
 		}
 	}
@@ -121,6 +134,22 @@ public class ModLogManager implements EventListener
 	public ModLogManager(JDA api)
 	{
 		api.addEventListener(this);
+	}
+
+	private class Tuple<T extends User, M extends MessageImpl>
+	{
+
+		private T user;
+		private long time;
+		private M message;
+
+		public void set(T user, M message)
+		{
+			this.user = user;
+			this.time = System.currentTimeMillis();
+			this.message = message;
+		}
+
 	}
 
 }
