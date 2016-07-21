@@ -16,6 +16,7 @@
 
 package minn.music.settings;
 
+import minn.music.util.EntityUtil;
 import minn.music.util.PersistenceUtil;
 import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.entities.TextChannel;
@@ -136,6 +137,8 @@ public class GuildSettings
 				.replace("{userid}", event.getUser().getId())
 				.replace("{server}", event.getGuild().getName())
 				.replace("{mention}", event.getUser().getAsMention())
+				.replace("{discriminator}", event.getUser().getDiscriminator())
+				.replace("{tag}", EntityUtil.transform(event.getUser()))
 				.replace("{user}", event.getUser().getUsername())
 				.replace("@everyone", "@\u0001everyone")
 				.replace("@here", "@\u0001here");
@@ -156,7 +159,10 @@ public class GuildSettings
 		if (level == null)
 			level = WelcomeLevel.UNSET;
 		this.welcomeLevel = level;
-		welcomeLevels.put(id, welcomeLevel.value);
+		if (level == WelcomeLevel.UNSET)
+			welcomeLevels.remove(id);
+		else
+			welcomeLevels.put(id, welcomeLevel.value);
 		PersistenceUtil.save(welcomeLevels, "welcomeLevels");
 	}
 

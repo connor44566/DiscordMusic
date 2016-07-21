@@ -24,6 +24,7 @@ import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.hooks.EventListener;
+import net.dv8tion.jda.utils.ApplicationUtil;
 import org.json.JSONObject;
 
 import java.util.LinkedList;
@@ -32,15 +33,25 @@ import java.util.List;
 public class CarbonAPIManager
 {
 	private String carbon = null;
+	private String abal = null;
+	private String clientID;
 	private MusicBot bot;
 	private List<JDA> jdaList = new LinkedList<>();
 
-	public CarbonAPIManager()
+	public CarbonAPIManager(JDA api)
 	{
+		clientID = ApplicationUtil.getApplicationId(api);
 		try
 		{
 			carbon = (String) MusicBot.config.get("carbon");
-		} catch (NullPointerException e)
+		} catch (NullPointerException | ClassCastException e)
+		{
+			carbon = null;
+		}
+		try
+		{
+			abal = (String) MusicBot.config.get("botlist");
+		} catch (NullPointerException | ClassCastException e)
 		{
 			carbon = null;
 		}
@@ -55,6 +66,7 @@ public class CarbonAPIManager
 	{
 		if (jdaList.contains(api))
 			return;
+		jdaList.add(api);
 		api.addEventListener((EventListener) event ->
 		{
 			if (event instanceof GuildJoinEvent || event instanceof GuildLeaveEvent)
@@ -71,19 +83,35 @@ public class CarbonAPIManager
 
 	private void post()
 	{
-		if (carbon == null)
-			return;
-		try
+		if (carbon != null)
 		{
-			if (Unirest.post("https://www.carbonitex.net/discord/data/botdata.php").body(new JSONObject()
-					.put("servercount", getSize())
-					.put("key", carbon)
-					.put("logoid", jdaList.get(0).getSelfInfo().getAvatarId())
-					.toString()).asString().getStatus() > 299)
+			try
+			{
+				if (Unirest.post("https://www.carbonitex.net/discord/data/botdata.php").body(new JSONObject()
+						.put("servercount", getSize())
+						.put("key", carbon)
+						.put("logoid", (jdaList.isEmpty() ? null : jdaList.get(0).getSelfInfo().getAvatarId()))
+						.toString()).asString().getStatus() > 299)
+					carbon = null;
+			} catch (UnirestException e)
+			{
 				carbon = null;
-		} catch (UnirestException e)
+			}
+		}
+		if (abal != null)
 		{
-			carbon = null;
+			try
+			{
+				if (Unirest.post("https://bots.discord.pw/api/bots/" + clientID + "/stats")
+						.header("Authorization", abal)
+						.body(new JSONObject()
+								.put("server_count", getSize())
+								.toString()).asString().getStatus() > 299)
+					abal = null;
+			} catch (UnirestException e)
+			{
+				abal = null;
+			}
 		}
 	}
 

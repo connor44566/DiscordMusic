@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'minn'
-version '3.0.2'
+version '3.2'
 
 //noinspection GroovyUnusedAssignment
 mainClassName = "minn.music.Main"
@@ -20,7 +20,7 @@ repositories {
 }
 
 dependencies {
-    compile 'net.dv8tion:JDA:2.2.0_335'
+    compile 'net.dv8tion:JDA:2.2.0_336'
     compile fileTree(dir: 'libs', include: '*.jar')
     compile 'net.dv8tion:jda-player:0.2.1_10'
 }

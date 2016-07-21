@@ -103,7 +103,7 @@ public class TodoCommand extends GenericCommand
 		}
 	}
 
-	public synchronized void todo(String[] args, String allArgs, List<Message> hist, TextChannel channel)
+	private synchronized void todo(String[] args, String allArgs, List<Message> hist, TextChannel channel)
 	{
 		List<String> lines = new LinkedList<>();
 		String[][] chunks = new String[0][];
@@ -119,7 +119,7 @@ public class TodoCommand extends GenericCommand
 		{
 			default:
 			{
-				throw new IllegalArgumentException("Invalid input. Method **" + args[0] + "** undefined. (Add/Remove/Strike/Clear)");
+				throw new IllegalArgumentException("Invalid input. Method **" + args[0] + "** undefined. (Add/Remove/Edit/Strike/Clear)");
 			}
 			case "empty":
 			case "clear":
@@ -254,14 +254,14 @@ public class TodoCommand extends GenericCommand
 		}
 	}
 
-	public int getIndex(String arg)
+	private int getIndex(String arg)
 	{
 		if (!arg.matches("\\d+"))
 			throw new IllegalArgumentException("Invalid index. Must be an integer.");
 		return Integer.parseInt(arg) - 1;
 	}
 
-	public boolean hitLimit(List<String> lines)
+	private boolean hitLimit(List<String> lines)
 	{
 		if (lines.isEmpty())
 			return false;

@@ -16,6 +16,7 @@
 
 package minn.music.audio.send;
 
+import minn.music.managers.ConnectionManager;
 import minn.music.util.PersistenceUtil;
 import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.entities.Guild;
@@ -71,6 +72,7 @@ public class QueueManager
 				Guild g = c.getGuild();
 				MusicPlayer player = new MusicPlayer();
 				g.getAudioManager().setSendingHandler(player);
+				ConnectionManager.addPlayer(g, player);
 				try
 				{
 					g.getAudioManager().openAudioConnection(c);

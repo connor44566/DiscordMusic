@@ -72,11 +72,12 @@ public class Main
 			LOG.info("Shards: " + shards);
 		}
 		final int[] i = {0};
-		CarbonAPIManager carbonAPIManager = new CarbonAPIManager();
+		AtomicReference<CarbonAPIManager> carbonAPIManager = new AtomicReference<>(null);
 		try
 		{
 			new MusicBot(manager ->
 			{
+				if (carbonAPIManager.get() == null) carbonAPIManager.set(new CarbonAPIManager(manager.getJDA()));
 				AtomicReference<GenericCommand> command = new AtomicReference<>();
 
 				// Moderation
@@ -322,8 +323,8 @@ public class Main
 				new ModLogManager(manager.getJDA());
 				new WelcomeManager(manager.getJDA());
 				QueueManager.resume(manager.getJDA());
-				carbonAPIManager.setBot(manager.bot);
-				carbonAPIManager.listenTo(manager.getJDA());
+				carbonAPIManager.get().setBot(manager.bot);
+				carbonAPIManager.get().listenTo(manager.getJDA());
 				LOG.info((++i[0]) + " shards ready!");
 			}, shards, cfg);
 		} catch (Exception e)

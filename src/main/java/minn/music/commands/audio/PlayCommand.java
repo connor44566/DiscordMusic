@@ -17,6 +17,7 @@
 package minn.music.commands.audio;
 
 import minn.music.commands.GenericCommand;
+import minn.music.managers.ConnectionManager;
 import minn.music.util.SearchUtil;
 import net.dv8tion.jda.entities.Message;
 import net.dv8tion.jda.player.MusicPlayer;
@@ -82,7 +83,11 @@ public class PlayCommand extends GenericCommand
 			{
 			}
 		} else
+		{
 			event.guild.getAudioManager().setSendingHandler(player);
+			ConnectionManager.addPlayer(event.guild, player);
+		}
+
 
 		if (player.getAudioQueue().size() >= 150)
 		{
@@ -96,8 +101,13 @@ public class PlayCommand extends GenericCommand
 			{
 				player.play();
 				event.send("**Started playing...**");
-			} else
+			} else if (event.guild.getAudioManager().getSendingHandler() == player)
 				event.send("I am unable to start playing. Provide a URL.");
+			else if (player.isPlaying() && event.guild.getAudioManager().getSendingHandler() != player)
+			{
+				event.guild.getAudioManager().setSendingHandler(player);
+				event.send("**Started playing...**");
+			}
 			return;
 		}
 
@@ -167,6 +177,8 @@ public class PlayCommand extends GenericCommand
 					final boolean[] limited = {false};
 					queue.submit(() ->
 					{
+						if(limited[0])
+							return;
 						AudioInfo info = sources.get(finalI).getInfo();
 						if (info.isLive())
 							return;
@@ -184,9 +196,8 @@ public class PlayCommand extends GenericCommand
 							LOG.debug("Encountered error: " + info.getError());
 						} else if (!limited[0])
 						{
-							msg[0].updateMessageAsync("Queue limit reached.", null);
 							limited[0] = true;
-							return;
+							msg[0].updateMessageAsync("Queue limit reached.", null);
 						}
 					});
 				}
