@@ -24,6 +24,7 @@ import minn.music.commands.code.*;
 import minn.music.commands.media.*;
 import minn.music.commands.mod.*;
 import minn.music.commands.settings.*;
+import minn.music.hooks.Logger;
 import minn.music.hooks.impl.*;
 import minn.music.managers.*;
 import minn.music.settings.*;
@@ -65,6 +66,7 @@ public class Main
 			LOG.info("Shards: " + shards);
 		}
 		final int[] i = {0};
+		Logger.init();
 		AtomicReference<CarbonAPIManager> carbonAPIManager = new AtomicReference<>(null);
 		try
 		{
@@ -191,6 +193,7 @@ public class Main
 				((Container) command.get()).addItem(new AvatarCommand());
 				((Container) command.get()).addItem(new DetermineUsage());
 				((Container) command.get()).addItem(new IgnoreCommand());
+				((Container) command.get()).addItem(new LogCommand());
 				((Container) command.get()).addItem(new StatsCommand(manager.bot));
 				manager.registerContainer((Container) command.get());
 

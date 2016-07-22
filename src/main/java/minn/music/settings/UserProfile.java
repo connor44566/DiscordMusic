@@ -87,7 +87,7 @@ public class UserProfile
 		if (toSet.length() > key.length)
 			throw new IndexOutOfBoundsException("Maximum length for that setting is: **" + key.length + "**.");
 		else if (toSet.length() < 1)
-			throw new IllegalArgumentException("No content given.");
+			throw new UnsupportedOperationException("No content given.");
 		object.put(key.name(), toSet);
 	}
 
@@ -130,7 +130,8 @@ public class UserProfile
 		YOUTUBE("\uD83C\uDFAC Youtube", 100),
 		WEBSITE("\uD83D\uDDA5 Website", 100),
 		EMAIL("\uD83D\uDCE7 Email", 100),
-		DISCORD("\uD83D\uDD17 Discord", 50, true);
+		DISCORD("\uD83D\uDD17 Discord", 50, true),
+		NOTE("\uD83D\uDCDD Note", 200);
 
 		private String caption;
 		private int length;

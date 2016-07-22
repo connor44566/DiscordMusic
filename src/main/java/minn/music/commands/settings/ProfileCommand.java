@@ -46,10 +46,10 @@ public class ProfileCommand extends GenericCommand
 					new UserProfile(event.author).setKey(setting, event.allArgs.split("\\s+", 3)[2]);
 					event.send("Updated profile.");
 				}
-			} catch (ArrayIndexOutOfBoundsException e)
+			} catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e)
 			{
 				event.send("Invalid property/input.");
-			}  catch (Exception e)
+			} catch (Exception e)
 			{
 				event.send(e.getMessage());
 			}
