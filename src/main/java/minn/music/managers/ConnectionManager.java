@@ -54,24 +54,30 @@ public class ConnectionManager
 		{
 			while (!Thread.currentThread().isInterrupted())
 			{
-				List<String> toRemove = new LinkedList<>();
-				guilds.forEach((g, p) ->
+				try
 				{
-					if (p.isPlaying() || last_check.get(p) + KEEP_ALIVE_TIME > System.currentTimeMillis())
-						return;
-					AudioManager manager = getManagerFor(g);
-					if (manager != null)
+					List<String> toRemove = new LinkedList<>();
+					guilds.forEach((g, p) ->
 					{
-						if (manager.isConnected())
-							manager.closeAudioConnection();
-						manager.setSendingHandler(null);
-					}
-					p.removeEventListener(listener);
-					last_check.remove(p);
-					toRemove.add(g);
-					LOG.info("Closed Connection. (" + g + ")");
-				});
-				toRemove.parallelStream().forEach(guilds::remove);
+						if (p.isPlaying() || last_check.get(p) + KEEP_ALIVE_TIME > System.currentTimeMillis())
+							return;
+						AudioManager manager = getManagerFor(g);
+						if (manager != null)
+						{
+							if (manager.isConnected())
+								manager.closeAudioConnection();
+							manager.setSendingHandler(null);
+						}
+						p.removeEventListener(listener);
+						last_check.remove(p);
+						toRemove.add(g);
+						LOG.info("Closed Connection. (" + g + ")");
+					});
+					toRemove.parallelStream().forEach(guilds::remove);
+				} catch (Exception e)
+				{
+					LOG.log(e);
+				}
 				try
 				{
 					Thread.sleep(KEEP_ALIVE_TIME);

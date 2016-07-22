@@ -166,10 +166,11 @@ public class TodoCommand extends GenericCommand
 				int index = getIndex(args[1]);
 				if (index < 0 || index >= lines.size())
 					throw new IllegalArgumentException("Index is out of range (1-" + lines.size() + ").");
-				int chunkID = index / 10;
+				int chunkID = index / 10; // Affected chunk
+				int chunkLine = index % 10; // Affected Line in chunk
 				Message m = hist.get(chunkID);
 				String message = allArgs.split("\\s+", 3)[2].replaceAll("(\n|~~)", "");
-				chunks[chunkID][index] = lines.get(index).replaceAll("^((?:~~)?\\d+\\) ).+$", "$1" + message);
+				chunks[chunkID][chunkLine] = lines.get(index).replaceAll("^((?:~~)?\\d+\\) ).+$", "$1" + message);
 				String newContent = String.join("\n", (CharSequence[]) chunks[chunkID]);
 				m.updateMessageAsync(newContent, null);
 				break;

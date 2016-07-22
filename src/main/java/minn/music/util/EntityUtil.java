@@ -32,7 +32,7 @@ public class EntityUtil
 
 	// Patterns
 	public static final String ID = "\\d{16,}";
-	public static final String USER_MENTION = "<?!@(" + ID + ")>";
+	public static final String USER_MENTION = "<!?@(" + ID + ")>";
 	public static final String CHANNEL_MENTION = "<#(" + ID + ")>";
 	public static final String USER_TAG = "\\S.{0,30}\\S#\\d{4}";
 

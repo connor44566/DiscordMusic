@@ -123,7 +123,7 @@ public class SpamifyCommand extends GenericCommand
 	public void invoke(CommandEvent event)
 	{
 		if(event.allArgs.isEmpty())
-			event.send("Enter something.");
+			event.send(convert("Enter something."));
 		else
 			event.send(convert(event.allArgs));
 	}

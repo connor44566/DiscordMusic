@@ -259,6 +259,7 @@ public class Main
 				((Container) command.get()).addItem(new TodoCommand());
 				((Container) command.get()).addItem(new ModLogCommand());
 				((Container) command.get()).addItem(new WelcomeCommand());
+				((Container) command.get()).addItem(new ProfileCommand());
 				manager.registerContainer((Container) command.get());
 
 				// Implemented
