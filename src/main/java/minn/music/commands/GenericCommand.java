@@ -1,5 +1,22 @@
+/*
+ *      Copyright 2016 Florian Spieß (Minn).
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package minn.music.commands;
 
+import minn.music.MusicBot;
 import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.entities.Message;
@@ -7,6 +24,7 @@ import net.dv8tion.jda.entities.MessageChannel;
 import net.dv8tion.jda.entities.User;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.utils.SimpleLog;
 
 import java.util.function.Consumer;
 
@@ -32,6 +50,7 @@ public abstract class GenericCommand
 
 	/**
 	 * Used to get info about the command.
+	 *
 	 * @return Info
 	 */
 	public String getInfo()
@@ -41,12 +60,14 @@ public abstract class GenericCommand
 
 	/**
 	 * Must be implemented by sub-class.
+	 *
 	 * @param event A CommandEvent implementation.
 	 */
 	public abstract void invoke(CommandEvent event);
 
 	/**
 	 * Attributes this command requires.
+	 *
 	 * @return String
 	 */
 	public String getAttributes()
@@ -59,6 +80,9 @@ public abstract class GenericCommand
 	 */
 	public static class CommandEvent
 	{
+
+		private final static SimpleLog LOG = SimpleLog.getLog("CommandSender");
+
 		/**
 		 * Used if it allows private and guild invokes.
 		 */
@@ -81,9 +105,8 @@ public abstract class GenericCommand
 		public final String[] args;
 
 
-		public CommandEvent(MessageReceivedEvent event)
+		public CommandEvent(MessageReceivedEvent event, String trimmed)
 		{
-			// TODO: implement
 			channel = event.getChannel();
 			guild = event.getGuild();
 			api = event.getJDA();
@@ -91,9 +114,9 @@ public abstract class GenericCommand
 			message = event.getMessage();
 			isPrivate = event.isPrivate();
 
-			String[] parts = message.getRawContent().split("\\s+", 2);
+			String[] parts = trimmed.split("\\s+", 2);
 
-			if(parts.length > 1)
+			if (parts.length > 1)
 			{
 				this.allArgs = parts[1];
 				this.args = allArgs.split("\\s+");
@@ -106,9 +129,8 @@ public abstract class GenericCommand
 			messageEvent = event;
 		}
 
-		public CommandEvent(GuildMessageReceivedEvent event)
+		public CommandEvent(GuildMessageReceivedEvent event, String trimmed)
 		{
-			// TODO: implement
 			channel = event.getChannel();
 			guild = event.getGuild();
 			api = event.getJDA();
@@ -116,9 +138,9 @@ public abstract class GenericCommand
 			message = event.getMessage();
 			isPrivate = false;
 
-			String[] parts = message.getRawContent().split("\\s+", 2);
+			String[] parts = trimmed.split("\\s+", 2);
 
-			if(parts.length > 1)
+			if (parts.length > 1)
 			{
 				this.allArgs = parts[1];
 				this.args = allArgs.split("\\s+");
@@ -140,13 +162,32 @@ public abstract class GenericCommand
 		{
 			try
 			{
-				channel.sendMessageAsync(message, callback);
-			} catch (Exception ignored)
+				message = message.replace(MusicBot.config.token, "<place token here>").replace("@everyone", "@\u0001everyone").replace("@here", "@\u0001here"); // no mass mentions or token
+				channel.sendMessageAsync(message, msg ->
+				{
+					if (callback != null) new Thread(() ->
+					{
+						try
+						{
+							callback.accept(msg);
+						} catch (Exception e)
+						{
+							SimpleLog.getLog("SenderThread").fatal(e);
+						}
+					}, "Async Callback Accept").start();
+				}); // async
+			} catch (Exception e)
 			{
-
+				LOG.warn("A message was not sent due to " + e.getClass().getSimpleName() + ": " + e.getMessage());
+				if (callback != null) new Thread(() -> callback.accept(null), "Async Callback Accept").start();
 			}
 		}
 
+	}
+
+	public String toString()
+	{
+		return getAlias() + "(" + getAttributes() + ")";
 	}
 
 }

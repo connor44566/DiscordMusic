@@ -14,23 +14,41 @@
  *  limitations under the License.
  */
 
-package minn.music.commands;
+package minn.music.commands.audio;
 
-public class PingCommand extends GenericCommand
+import minn.music.commands.GenericCommand;
+import minn.music.util.SearchUtil;
+
+public class SearchCommand extends GenericCommand
 {
+
+	public String getInfo()
+	{
+		return "Used to look up given <query> on youtube. Picks first link.";
+	}
+
+	public String getAttributes()
+	{
+		return "<query>";
+	}
+
 	@Override
 	public String getAlias()
 	{
-		return "ping";
+		return "search";
 	}
 
 	@Override
-	public void invoke(GenericCommand.CommandEvent event)
+	public void invoke(CommandEvent event)
 	{
-		long time = System.currentTimeMillis();
-		event.send("Pong!", m ->
+		if (event.allArgs.isEmpty())
 		{
-			m.updateMessageAsync("__**Pong:**__ " + (System.currentTimeMillis() - time) + "ms", null);
+			event.send("Usage: " + getAlias() + " " + getAttributes());
+			return;
+		}
+		event.send("Fetching...", m -> {
+			if (m != null) m.updateMessageAsync(SearchUtil.searchYoutube(event.allArgs), null);
 		});
 	}
+
 }

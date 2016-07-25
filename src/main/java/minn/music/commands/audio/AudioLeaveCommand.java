@@ -14,23 +14,37 @@
  *  limitations under the License.
  */
 
-package minn.music.commands;
+package minn.music.commands.audio;
 
-public class PingCommand extends GenericCommand
+import net.dv8tion.jda.managers.AudioManager;
+
+public class AudioLeaveCommand extends GenericAudioCommand
 {
 	@Override
-	public String getAlias()
+	public String getAttributes()
 	{
-		return "ping";
+		return "";
 	}
 
 	@Override
-	public void invoke(GenericCommand.CommandEvent event)
+	public String getAlias()
 	{
-		long time = System.currentTimeMillis();
-		event.send("Pong!", m ->
-		{
-			m.updateMessageAsync("__**Pong:**__ " + (System.currentTimeMillis() - time) + "ms", null);
-		});
+		return "dc";
+	}
+
+	@Override
+	public String getInfo()
+	{
+		return "Disconnects the bot from the current voice channel.";
+	}
+
+	@Override
+	public void invoke(CommandEvent event)
+	{
+		AudioManager manager = event.guild.getAudioManager();
+		if (manager.isConnected() || manager.isAttemptingToConnect())
+			manager.closeAudioConnection();
+		else
+			event.send("I am not currently connected to a voice channel. If that is wrong contact a dev or change the voice region of this server.");
 	}
 }

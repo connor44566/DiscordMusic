@@ -14,43 +14,48 @@
  *  limitations under the License.
  */
 
-package minn.music.commands;
+package minn.music.commands.audio;
 
-public class _Alias_ extends GenericCommand
+import net.dv8tion.jda.player.MusicPlayer;
+
+import java.util.Collections;
+
+public class PlayerShuffleCommand extends GenericAudioCommand
 {
-
-	private String alias;
-	private GenericCommand command;
-	private boolean isPrivate;
-
-	public _Alias_(String alias, GenericCommand command)
-	{
-		this(alias, command, false);
-	}
-
-	public _Alias_(String alias, GenericCommand command, boolean isPrivate)
-	{
-		assert alias != null && command != null && !alias.isEmpty();
-		this.alias = alias;
-		this.command = command;
-		this.isPrivate = isPrivate;
-	}
-
 	@Override
-	public boolean isPrivate()
+	public String getAttributes()
 	{
-		return isPrivate;
+		return "";
 	}
 
 	@Override
 	public String getAlias()
 	{
-		return alias;
+		return "shuffle";
+	}
+
+	@Override
+	public String getInfo()
+	{
+		return "Shuffles current queue.";
 	}
 
 	@Override
 	public void invoke(CommandEvent event)
 	{
-		command.invoke(event);
+		try
+		{
+			MusicPlayer player = (MusicPlayer) event.guild.getAudioManager().getSendingHandler();
+			if (player == null)
+				event.send("Queue is empty.");
+			else
+			{
+				Collections.shuffle(player.getAudioQueue());
+				event.send("Queue has been shuffled.");
+			}
+		} catch (ClassCastException e)
+		{
+			event.send("Player is not available.");
+		}
 	}
 }

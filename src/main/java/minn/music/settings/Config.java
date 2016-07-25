@@ -1,3 +1,19 @@
+/*
+ *      Copyright 2016 Florian Spieß (Minn).
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package minn.music.settings;
 
 import net.dv8tion.jda.utils.SimpleLog;
@@ -15,7 +31,7 @@ public class Config
 {
 	// Generic information
 	public final static String BASE_URI = "Settings/";
-	protected final static SimpleLog LOG = SimpleLog.getLog("ConfigReader");
+	public final static SimpleLog LOG = SimpleLog.getLog("ConfigReader");
 	// Instance information
 	protected File cfg;
 	protected JSONObject object;
@@ -68,6 +84,17 @@ public class Config
 	{
 		try
 		{
+			if(isBase && !file.exists())
+			{
+				Config.createConfig(new JSONObject()
+						.put("prefix", "")
+						.put("token", JSONObject.NULL)
+						.put("owner", "")
+						.put("home", "")
+						.put("logChan", ""), "Base.json");
+				LOG.fatal("Config file is missing. It has been generated and you need to populate it.");
+				System.exit(1);
+			}
 			readJSON(new JSONObject(new String(Files.readAllBytes(Paths.get(file.toURI())))));
 		} catch (IOException e)
 		{
@@ -81,20 +108,22 @@ public class Config
 		this.object = object;
 		if (isBase)
 		{
+			LOG.debug("Found Base.json");
 			if (object.isNull("token") || object.isNull("owner") || object.isNull("prefix"))
 			{
-				LOG.log(new IllegalArgumentException("Config file \"" + cfg + "\" is missing required fields. Please delete it and restart."));
+				LOG.log(new IllegalArgumentException("Config file \"" + cfg + "\" is missing required fields. Please refill config."));
 				Config.createConfig(new JSONObject()
 						.put("prefix", "")
-						.put("token", "")
+						.put("token", JSONObject.NULL)
 						.put("owner", "")
 						.put("home", "")
 						.put("logChan", ""), "Base.json");
 				return;
 			}
-			token = object.getString("token");
-			owner = object.getString("owner");
-			prefix = object.getString("prefix");
+			this.token = object.getString("token");
+			this.owner = object.getString("owner");
+			this.prefix = object.getString("prefix");
+			LOG.debug("Config: " + object.toString());
 		}
 		if (object.has("home") && !object.isNull("home"))
 			home = object.getString("home");

@@ -14,23 +14,28 @@
  *  limitations under the License.
  */
 
-package minn.music.commands;
+package minn.music.commands.media;
 
-public class PingCommand extends GenericCommand
+import minn.music.commands.GenericCommand;
+import minn.music.util.SearchUtil;
+
+public class GifCommand extends GenericCommand
 {
-	@Override
-	public String getAlias()
+
+	public String getAttributes()
 	{
-		return "ping";
+		return "<query...>";
 	}
 
 	@Override
-	public void invoke(GenericCommand.CommandEvent event)
+	public String getAlias()
 	{
-		long time = System.currentTimeMillis();
-		event.send("Pong!", m ->
-		{
-			m.updateMessageAsync("__**Pong:**__ " + (System.currentTimeMillis() - time) + "ms", null);
-		});
+		return "gif";
+	}
+
+	@Override
+	public void invoke(CommandEvent event)
+	{
+		event.send(SearchUtil.getGif(event.args));
 	}
 }

@@ -14,23 +14,18 @@
  *  limitations under the License.
  */
 
-package minn.music.commands;
+package minn.music.hooks;
 
-public class PingCommand extends GenericCommand
+import net.dv8tion.jda.events.message.guild.GuildMessageReceivedEvent;
+
+@FunctionalInterface public interface MentionListener
 {
-	@Override
-	public String getAlias()
-	{
-		return "ping";
-	}
+	/**
+	 * Get's called when the Bot was mentioned. <b>Don't forget to register this listener.</b>
+	 * <br/>
+	 * <i>Example can be found in {@link minn.music.hooks.impl.PrefixTeller PreifxTeller}.</i>
+	 * @param event A GuildMessageReceivedEvent (We don't care about private mentions here)
+	 */
+	void onMention(GuildMessageReceivedEvent event);
 
-	@Override
-	public void invoke(GenericCommand.CommandEvent event)
-	{
-		long time = System.currentTimeMillis();
-		event.send("Pong!", m ->
-		{
-			m.updateMessageAsync("__**Pong:**__ " + (System.currentTimeMillis() - time) + "ms", null);
-		});
-	}
 }

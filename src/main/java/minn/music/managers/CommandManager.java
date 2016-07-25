@@ -1,10 +1,31 @@
+/*
+ *      Copyright 2016 Florian Spieß (Minn).
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package minn.music.managers;
 
 import minn.music.MusicBot;
+import minn.music.commands.Container;
 import minn.music.commands.GenericCommand;
 import minn.music.hooks.CommandListener;
+import minn.music.hooks.MentionListener;
+import minn.music.util.EntityUtil;
+import minn.music.util.IgnoreUtil;
 import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.hooks.EventListener;
 import net.dv8tion.jda.utils.SimpleLog;
 
@@ -18,10 +39,14 @@ public class CommandManager
 	private final List<GenericCommand> noPrivateCommands = new LinkedList<>();
 	private final List<GenericCommand> commands = new LinkedList<>();
 	private final List<CommandListener<GenericCommand>> listeners = new LinkedList<>();
+	private final List<MentionListener> mentionListeners = new LinkedList<>();
+	private final List<Container> containers = new LinkedList<>();
+	private static final Map<String, Integer> usage = new HashMap<>();
 	public final MusicBot bot;
-	private final static SimpleLog LOG = SimpleLog.getLog("CommandManager");
+	public final static SimpleLog LOG = SimpleLog.getLog("CommandManager");
 
-	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 10, 5, TimeUnit.MINUTES, new LinkedBlockingQueue<>(), r -> {
+	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 10, 5, TimeUnit.MINUTES, new LinkedBlockingQueue<>(), r ->
+	{
 		final Thread t = new Thread(r, "CommandExecutorThread");
 		t.setDaemon(true);
 		t.setPriority(5);
@@ -48,39 +73,120 @@ public class CommandManager
 
 		this.api.addEventListener((EventListener) event ->
 		{
+			if (event instanceof GuildMessageReceivedEvent
+					&& EntityUtil.mentionsMe(((GuildMessageReceivedEvent) event).getMessage()))
+			{
+				for (MentionListener listener : getMentionListeners())
+				{
+					listener.onMention((GuildMessageReceivedEvent) event);
+				}
+			}
 			if (event instanceof MessageReceivedEvent)
 				handleMessage((MessageReceivedEvent) event);
 		});
-
-		listeners.add(new CommandListenerImpl());
 	}
 
 	private void handleMessage(MessageReceivedEvent event)
 	{
-		if(!event.getMessage().getRawContent().startsWith(bot.config.prefix) || event.getAuthor() == event.getJDA().getSelfInfo())
+		if ((!event.getMessage().getRawContent().startsWith(MusicBot.config.prefix)
+				&& (event.getGuild() != null
+					&& !event.getMessage().getRawContent().startsWith(PrefixManager.getPrefix(event.getGuild())))) // If Guild -> has custom prefix?
+				|| IgnoreUtil.isIgnored(event.getTextChannel())
+				|| IgnoreUtil.isIgnored(event.getAuthor())
+				|| event.getAuthor().isBot())
 			return;
-		final String com = event.getMessage().getRawContent().split("\\s+", 2)[0];
-		for (GenericCommand c : commands)
+		String trimmed;
+		if (!PrefixManager.isCustom(event.getMessage(), event.getGuild()))
+			trimmed = event.getMessage().getRawContent().substring(MusicBot.config.prefix.length()).trim();
+		else
+			trimmed = event.getMessage().getRawContent().substring(PrefixManager.getPrefix(event.getGuild()).length()).trim();
+		if (trimmed.isEmpty()) return;
+		final String com = trimmed.split("\\s+", 2)[0];
+
+		// General Commands
+		for (GenericCommand c : getCommands())
 		{
-			if((bot.config.prefix + c.getAlias()).equalsIgnoreCase(com))
+			if (!c.getAlias().equalsIgnoreCase(com))
+				continue;
+			String finalTrimmed = trimmed;
+			executor.submit(() ->
 			{
-				executor.submit(() -> c.invoke(new GenericCommand.CommandEvent(event)));
-				for(CommandListener<GenericCommand> listener : listeners)
-					listener.onCommand(c);
+				try
+				{
+					GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event, finalTrimmed);
+					c.invoke(ce);
+					for (CommandListener<GenericCommand> listener : getListeners())
+						listener.onCommand(c, ce);
+					onCommand(c, ce); // static synced listener
+				} catch (Exception e)
+				{
+					LOG.log(e);
+				}
+			});
+
+			return;
+		}
+
+		// Containers
+		for (Container c : getContainers())
+		{
+			if (!c.isPrivate() && event.isPrivate())
+				continue;
+			// Info
+			if (com.equalsIgnoreCase(c.getAlias()))
+			{
+				GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event, trimmed);
+				ce.send(c.getInfo());
+				for (CommandListener<GenericCommand> listener : getListeners())
+					listener.onCommand(c, ce);
+				onCommand(c, ce); // static synced listener
 				return;
 			}
+			// Command in Container
+			GenericCommand cmd = c.getCommand(com);
+			if (cmd == null)
+				continue;
+			String finalTrimmed1 = trimmed;
+			executor.submit(() ->
+			{
+				try
+				{
+					GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event, finalTrimmed1);
+					cmd.invoke(ce);
+					for (CommandListener<GenericCommand> listener : getListeners())
+						listener.onCommand(cmd, ce); // Calls listener with cmd
+					onCommand(cmd, ce); // static synced listener
+				} catch (Exception e)
+				{
+					LOG.log(e);
+				}
+			});
+			return;
 		}
+
+		// Private
 		if (event.isPrivate())
 			return;
-		for (GenericCommand c : noPrivateCommands)
+		for (GenericCommand c : getNonPrivateCommands())
 		{
-			if((bot.config.prefix + c.getAlias()).equalsIgnoreCase(com))
+			if (!c.getAlias().equalsIgnoreCase(com))
+				continue;
+			String finalTrimmed2 = trimmed;
+			executor.submit(() ->
 			{
-				executor.submit(() -> c.invoke(new GenericCommand.CommandEvent(event)));
-				for(CommandListener<GenericCommand> listener : listeners)
-					listener.onCommand(c);
-				return;
-			}
+				try
+				{
+					GenericCommand.CommandEvent ce = new GenericCommand.CommandEvent(event, finalTrimmed2);
+					c.invoke(ce);
+					for (CommandListener<GenericCommand> listener : getListeners())
+						listener.onCommand(c, ce);
+					onCommand(c, ce); // static synced listener
+				} catch (Exception e)
+				{
+					LOG.log(e);
+				}
+			});
+			return;
 		}
 	}
 
@@ -116,16 +222,61 @@ public class CommandManager
 	{
 		return Collections.unmodifiableList(new LinkedList<>(noPrivateCommands));
 	}
+
+	/**
+	 * Provides a thread safe version of {@link CommandManager#containers}
+	 *
+	 * @return Thread Safe Container list.
+	 */
+	public List<Container> getContainers()
+	{
+		return Collections.unmodifiableList(new LinkedList<>(containers));
+	}
+
+	public List<MentionListener> getMentionListeners()
+	{
+		return Collections.unmodifiableList(new LinkedList<>(mentionListeners));
+	}
+
+	public List<CommandListener<GenericCommand>> getListeners()
+	{
+		return Collections.unmodifiableList(new LinkedList<>(listeners));
+	}
+
+	public static Map<String, Integer> getUsage()
+	{
+		return Collections.unmodifiableMap(new HashMap<>(usage));
+	}
+
+	public static int getUsage(String alias)
+	{
+		final String[] c = {null};
+		Map<String, Integer> use = getUsage();
+		use.forEach((cmd, i) ->
+		{
+			if (cmd.equalsIgnoreCase(alias))
+				c[0] = cmd;
+		});
+		if (c[0] == null)
+			return -1;
+		return use.get(c[0]);
+	}
+
+	public JDA getJDA()
+	{
+		return api;
+	}
+
 	/**
 	 * Used to register a new {@link GenericCommand Command}.
 	 *
 	 * @param command GenericCommand.
 	 */
-	public void registerCommand(GenericCommand command)
+	public <V extends GenericCommand> void registerCommand(V command)
 	{
-		if (!(command instanceof GenericCommand))
+		if (command == null || command instanceof Container)
 		{
-			LOG.log(new IllegalArgumentException("Command must implement GenericCommand."));
+			LOG.log(new IllegalArgumentException("Command must implement GenericCommand and not Container."));
 			return;
 		}
 		if ((command).isPrivate())
@@ -134,20 +285,32 @@ public class CommandManager
 			noPrivateCommands.add(command);
 	}
 
-	public static class CommandListenerImpl implements CommandListener<GenericCommand>
+	/**
+	 * Used to structure command list.
+	 *
+	 * @param container A Not-Null Container.
+	 */
+	public <V extends Container> void registerContainer(V container)
 	{
-		private Map<GenericCommand, Integer> usage = new HashMap<>();
+		assert container != null && !container.isEmpty();
+		if (containers.contains(container))
+			return;
+		containers.add(container);
+	}
 
-		@Override
-		public void onCommand(GenericCommand command)
-		{
-			if(usage.containsKey(command))
-				usage.put(command, usage.get(command) + 1);
-			else
-				usage.put(command, 1);
-			LOG.log(SimpleLog.Level.INFO, "Used: " + command.getAlias() + " [" + usage.get(command) + "]");
-		}
+	public <V extends MentionListener> void registerMentionListener(V listener)
+	{
+		assert listener != null;
+		mentionListeners.add(listener);
+	}
 
+	private static synchronized void onCommand(GenericCommand command, GenericCommand.CommandEvent event)
+	{
+		if (usage.containsKey(command.getAlias()))
+			usage.put(command.getAlias(), usage.get(command.getAlias()) + 1);
+		else
+			usage.put(command.getAlias(), 1);
+		LOG.info(EntityUtil.transform(event.author) + ": " + command.getAlias() + " [" + getUsage(command.getAlias()) + "]");
 	}
 
 }

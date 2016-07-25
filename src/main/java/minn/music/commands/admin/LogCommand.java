@@ -14,43 +14,49 @@
  *  limitations under the License.
  */
 
-package minn.music.commands;
+package minn.music.commands.admin;
 
-public class _Alias_ extends GenericCommand
+import minn.music.MusicBot;
+import minn.music.commands.GenericCommand;
+import minn.music.hooks.Logger;
+
+import java.io.File;
+
+public class LogCommand extends GenericCommand
 {
 
-	private String alias;
-	private GenericCommand command;
-	private boolean isPrivate;
-
-	public _Alias_(String alias, GenericCommand command)
+	public String getAttributes()
 	{
-		this(alias, command, false);
-	}
-
-	public _Alias_(String alias, GenericCommand command, boolean isPrivate)
-	{
-		assert alias != null && command != null && !alias.isEmpty();
-		this.alias = alias;
-		this.command = command;
-		this.isPrivate = isPrivate;
-	}
-
-	@Override
-	public boolean isPrivate()
-	{
-		return isPrivate;
+		return "[1-500]";
 	}
 
 	@Override
 	public String getAlias()
 	{
-		return alias;
+		return "log";
 	}
 
 	@Override
 	public void invoke(CommandEvent event)
 	{
-		command.invoke(event);
+		if (!event.author.getId().equals(MusicBot.config.owner))
+		{
+			event.send("You can't use this command.");
+			return;
+		}
+
+		int amount = 100;
+		if (!event.allArgs.isEmpty())
+			try
+			{
+				amount = Integer.parseInt(event.args[0]);
+			} catch (NumberFormatException ignored)
+			{
+			}
+		File f = Logger.log(amount);
+		if (f == null)
+			event.send("\uD83D\uDCA2");
+		else
+			event.send("✅ `" + f.toString() + "`");
 	}
 }
