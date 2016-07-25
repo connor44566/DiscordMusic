@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package minn.music.commands.media;
+package minn.music.commands.memes;
 
 import minn.music.commands.GenericCommand;
 
