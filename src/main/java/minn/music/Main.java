@@ -21,7 +21,7 @@ import minn.music.commands.*;
 import minn.music.commands.admin.*;
 import minn.music.commands.audio.*;
 import minn.music.commands.code.*;
-import minn.music.commands.media.*;
+import minn.music.commands.memes.*;
 import minn.music.commands.mod.*;
 import minn.music.commands.settings.*;
 import minn.music.hooks.Logger;
@@ -95,7 +95,7 @@ public class Main
 				manager.registerContainer((Container) command.get());
 
 				// Media
-				command.set(new Container(new GifCommand(), "media"));
+				command.set(new Container(new GifCommand(), "memes"));
 				((Container) command.get()).addItem(new CatCommand());
 				((Container) command.get()).addItem(new DoggoComant());
 				((Container) command.get()).addItem(new SpamifyCommand());
