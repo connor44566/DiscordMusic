@@ -76,6 +76,7 @@ public class StatsCommand extends GenericCommand
 		List<VoiceChannel> channels = getVoiceChannels();
 		int voiceConnections = getConnectedChannels().size();
 		int shards = bot.getShards().size();
+		int threads = Thread.activeCount();
 		int guilds = getGuilds().size();
 		int text = getTextChannels().size();
 		int voice = channels.size();
@@ -86,8 +87,8 @@ public class StatsCommand extends GenericCommand
 		return "__Stats for total bot [**" + shards + "** shard(s)]__\n\n**"
 				+ guilds + "** Guilds with **" + (text + voice) + "** channels. (**" + text + "** TC, **" + voice + "** VC)\n**"
 				+ pms + "** Private Channels and **" + voiceConnections + "** Voice connections. (**" + queueSize + "** queue entries)" +
-				"\nMemory in MB: [" + "`" + mem + "`/`" + Runtime.getRuntime().totalMemory() / (1024 * 1024) + "`/`" + Runtime.getRuntime().maxMemory() / (1024 * 1024) + "`]" +
-				"\nUptime: " + uptime;
+				"\nMemory in MB: [" + "`" + mem + "`/`" + Runtime.getRuntime().totalMemory() / (1024 * 1024) + "`/`" + Runtime.getRuntime().maxMemory() / (1024 * 1024) + "`] (**" + threads+"** Threads)"+
+				"\nUptime: " + uptime ;
 	}
 
 	public static int getQueueSize(List<VoiceChannel> channels)
